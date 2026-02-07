@@ -55,6 +55,7 @@ function DeleteButton({ slug }: { slug: string }) {
             if (res.ok) {
                 router.refresh();
             } else {
+                const data = await res.json();
                 console.error('Delete failed:', res.status, data);
                 alert(`Failed to delete: ${data.error || res.statusText}`);
             }

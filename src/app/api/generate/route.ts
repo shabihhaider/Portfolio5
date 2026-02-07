@@ -63,9 +63,8 @@ export async function POST(request: NextRequest) {
             coverImage: ogImageUrl,
 
             author: process.env.NEXT_PUBLIC_AUTHOR_NAME || 'Shabih Haider',
-            createdAt: new Date(),
-            updatedAt: new Date(),
             publishedAt: null, // Prisma expects Date | null
+            scheduledFor: null, // Prisma expects Date | null
             status: 'draft', // Force draft for review
 
             metaDescription: metadata.metaDescription,

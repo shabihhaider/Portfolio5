@@ -97,8 +97,38 @@ export async function POST(request: NextRequest) {
 
     } catch (error) {
         console.error('Generation Error:', error);
+
+        // Provide more specific error messages
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        const errorStack = error instanceof Error ? error.stack : '';
+
+        console.error('Error details:', {
+            message: errorMessage,
+            stack: errorStack,
+            hasGroqKey: !!process.env.GROQ_API_KEY,
+            hasDatabaseUrl: !!process.env.DATABASE_URL,
+        });
+
+        // Check for specific error types
+        if (errorMessage.includes('GROQ_API_KEY')) {
+            return NextResponse.json(
+                { error: 'AI service not configured. Please add GROQ_API_KEY to environment variables.' },
+                { status: 500 }
+            );
+        }
+
+        if (errorMessage.includes('DATABASE_URL') || errorMessage.includes('prisma')) {
+            return NextResponse.json(
+                { error: 'Database connection failed. Please check DATABASE_URL environment variable.' },
+                { status: 500 }
+            );
+        }
+
         return NextResponse.json(
-            { error: 'Failed to generate content' },
+            {
+                error: 'Failed to generate content',
+                details: process.env.NODE_ENV === 'development' ? errorMessage : undefined
+            },
             { status: 500 }
         );
     }

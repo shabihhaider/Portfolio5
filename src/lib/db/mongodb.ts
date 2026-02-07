@@ -5,10 +5,10 @@ if (!process.env.MONGODB_URI) {
 }
 
 const uri = process.env.MONGODB_URI;
-const options = process.env.NODE_ENV === 'development' ? {
-    tlsAllowInvalidCertificates: true,
-    family: 4,
-} : {};
+const options = {
+    tlsAllowInvalidCertificates: true, // Required for some Vercel/Atlas regions
+    family: 4, // Force IPv4 to avoid potential IPv6 resolution issues
+};
 
 let client: MongoClient;
 let clientPromise: Promise<MongoClient>;

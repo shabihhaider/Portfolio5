@@ -84,10 +84,11 @@ export class PostsDB {
         await prisma.post.updateMany({
             where: {
                 status: 'scheduled',
-                publishedAt: { lte: now },
+                scheduledFor: { lte: now }, // ✅ FIXED: Use scheduledFor instead of publishedAt
             },
             data: {
                 status: 'published',
+                publishedAt: now, // ✅ FIXED: Set publishedAt when publishing
                 updatedAt: now,
             },
         });

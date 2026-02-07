@@ -1,6 +1,7 @@
 import { cookies } from 'next/headers';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import prisma from '@/lib/db/prisma';
 
 export async function verifyAdmin(username: string, password: string): Promise<boolean> {
     const envUsername = process.env.ADMIN_USERNAME || 'admin';
@@ -20,7 +21,12 @@ export async function verifyAdmin(username: string, password: string): Promise<b
 }
 
 export async function createAdminToken(): Promise<string> {
-    const secret = process.env.JWT_SECRET || 'fallback-secret-for-dev-only-change-me';
+    const secret = process.env.JWT_SECRET;
+
+    if (!secret) {
+        throw new Error('JWT_SECRET environment variable is required');
+    }
+
     return jwt.sign(
         { admin: true, timestamp: Date.now() },
         secret,
@@ -31,7 +37,12 @@ export async function createAdminToken(): Promise<string> {
 export async function isAuthenticated(): Promise<boolean> {
     const cookieStore = await cookies();
     const token = cookieStore.get('admin_token')?.value;
-    const secret = process.env.JWT_SECRET || 'fallback-secret-for-dev-only-change-me';
+    const secret = process.env.JWT_SECRET;
+
+    if (!secret) {
+        console.error('JWT_SECRET is not configured');
+        return false;
+    }
 
     if (!token) return false;
 
@@ -56,15 +67,15 @@ export async function loginAdmin() {
 
 export async function getAdminStats() {
     // 1. Total Posts
-    const totalPosts = await prisma!.post.count();
+    const totalPosts = await prisma.post.count();
 
     // 2. Published Posts
-    const publishedPosts = await prisma!.post.count({
+    const publishedPosts = await prisma.post.count({
         where: { status: 'published' },
     });
 
     // 3. Total Views & Likes (Aggregate)
-    const aggregate = await prisma!.post.aggregate({
+    const aggregate = await prisma.post.aggregate({
         _sum: {
             views: true,
             likes: true,
@@ -77,7 +88,7 @@ export async function getAdminStats() {
     const totalCtaClicks = aggregate._sum.ctaClicks || 0;
 
     // 4. Subscribers (Placeholder for now)
-    const subscribers = await prisma!.subscriber.count();
+    const subscribers = await prisma.subscriber.count();
 
     return {
         totalPosts,

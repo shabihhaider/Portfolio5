@@ -31,8 +31,13 @@ if (process.env.NODE_ENV === 'development') {
 }
 
 export async function getDb(): Promise<Db> {
-    const client = await clientPromise;
-    return client.db('portfolio_blog'); // Explicitly calling the database name
+    try {
+        const client = await clientPromise;
+        return client.db('portfolio_blog');
+    } catch (error) {
+        console.error('MongoDB Connection Error:', error);
+        throw error;
+    }
 }
 
 export default clientPromise;

@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PostsDB } from '@/lib/db/posts';
-import { BlogPost } from '@/lib/db/schema';
+// import { BlogPost } from '@/lib/db/schema'; // Deprecated
+import { Post } from '@prisma/client';
 
 // GET all posts
 export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
-    const status = searchParams.get('status') as BlogPost['status'] | null;
+    const status = searchParams.get('status') as string | null;
 
     try {
         const posts = status

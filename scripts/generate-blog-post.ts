@@ -1,13 +1,17 @@
-
 import dotenv from 'dotenv';
 import path from 'path';
-import { generateBlogPost, generatePostMetadata, generateSlug } from '../src/lib/ai/groq';
-import { checkContentQuality } from '../src/lib/ai/quality-check';
-import { PostsDB } from '../src/lib/db/posts';
 import readingTime from 'reading-time';
 
-// Load env vars
+// Load env vars BEFORE importing modules that use them
 dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
+
+// Dynamic imports to ensure env vars are loaded
+const importLib = async () => {
+    const { generateBlogPost, generatePostMetadata, generateSlug } = await import('../src/lib/ai/groq');
+    const { checkContentQuality } = await import('../src/lib/ai/quality-check');
+    const { PostsDB } = await import('../src/lib/db/posts');
+    return { generateBlogPost, generatePostMetadata, generateSlug, checkContentQuality, PostsDB };
+};
 
 const TOPICS = [
     'Building AI applications with TensorFlow and Next.js',
@@ -23,8 +27,29 @@ const TOPICS = [
 ];
 
 async function main() {
-    const customTopic = process.argv[2];
-    const topic = customTopic || TOPICS[Math.floor(Math.random() * TOPICS.length)];
+    // Load modules
+    const { generateBlogPost, generatePostMetadata, generateSlug, checkContentQuality, PostsDB } = await importLib();
+    // Dynamic import for prisma to avoid top-level issues
+    const { default: prisma } = await import('../src/lib/db/prisma');
+
+    let topic = process.argv[2];
+
+    // If no topic provided, try to fetch from Settings
+    if (!topic) {
+        try {
+            const settings = await prisma.siteSettings.findFirst();
+            if (settings && settings.contentTopics.length > 0) {
+                topic = settings.contentTopics[Math.floor(Math.random() * settings.contentTopics.length)];
+                console.log('🤖 Selected topic from Site Settings:', topic);
+            }
+        } catch (e) {
+            console.warn('⚠️ Could not fetch settings, using default topics.');
+        }
+    }
+
+    if (!topic) {
+        topic = TOPICS[Math.floor(Math.random() * TOPICS.length)];
+    }
 
     console.log(`🤖 Generating blog post about: ${topic}`);
 
@@ -39,14 +64,14 @@ async function main() {
         const { content, model } = await generateBlogPost({
             topic,
             includeCode: true,
-            minWords: 1000,
-            maxWords: 1800,
+            minWords: 600,
+            maxWords: 1500,
             tags: extractTags(topic),
         });
 
         // 2. Quality check
         console.log('✅ Checking content quality...');
-        const qualityCheck = checkContentQuality(content, 1000);
+        const qualityCheck = checkContentQuality(content, 600);
 
         if (!qualityCheck.passed) {
             console.log('❌ Quality check failed:', qualityCheck.issues);
@@ -71,7 +96,7 @@ async function main() {
         const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://portfolio5-olive.vercel.app';
         const ogImageUrl = `${siteUrl}/api/og?title=${encodeURIComponent(metadata.title)}&tags=${encodeURIComponent((metadata.keywords || []).slice(0, 3).join(','))}`;
 
-        // 5. Save to MongoDB
+        // 5. Save to Database
         console.log('💾 Saving to database...');
 
         // Check if slug exists

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getDb } from '@/lib/db/mongodb';
+import prisma from '@/lib/db/prisma';
 
 export async function POST(request: NextRequest) {
     try {
@@ -10,22 +10,21 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'Missing data' }, { status: 400 });
         }
 
-        const db = await getDb();
-
         // Track the click event
-        await db.collection('analytics').insertOne({
-            type: 'cta_click',
-            postSlug,
-            ctaType,
-            timestamp: new Date(),
-            userAgent: request.headers.get('user-agent') || 'unknown'
+        await prisma.analytics.create({
+            data: {
+                type: 'cta_click',
+                postId: postSlug, // Storing slug as ID reference for now
+                path: ctaType,
+                userAgent: request.headers.get('user-agent') || 'unknown',
+            },
         });
 
         // Increment post CTA clicks
-        await db.collection('posts').updateOne(
-            { slug: postSlug },
-            { $inc: { ctaClicks: 1 } }
-        );
+        await prisma.post.update({
+            where: { slug: postSlug },
+            data: { ctaClicks: { increment: 1 } },
+        });
 
         return NextResponse.json({ success: true });
     } catch (error) {

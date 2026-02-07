@@ -1,0 +1,84 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Post {
+  id              String    @id @default(cuid())
+  slug            String    @unique
+  title           String
+  content         String    @db.Text
+  excerpt         String?   @db.Text
+  coverImage      String?
+  author          String    @default("Shabih Haider")
+  
+  status          String    @default("draft") // draft, published, archived
+  publishedAt     DateTime?
+  scheduledFor    DateTime?
+  
+  // SEO & Metadata
+  metaDescription String?   @db.Text
+  metaKeywords    String[]
+  ogImage         String?
+  
+  // Categorization
+  tags            String[]
+  category        String    @default("Tech")
+  
+  // Stats
+  views           Int       @default(0)
+  likes           Int       @default(0)
+  readingTime     String?
+  ctaClicks       Int       @default(0)
+  
+  // AI Generation Info
+  generatedBy     String?
+  humanEdited     Boolean   @default(false)
+  qualityScore    Int       @default(0)
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@map("posts")
+}
+
+model Subscriber {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  source    String   @default("blog_footer")
+  status    String   @default("active") // active, unsubscribed
+  createdAt DateTime @default(now())
+
+  @@map("subscribers")
+}
+
+model Analytics {
+  id        String   @id @default(cuid())
+  type      String   // page_view, cta_click
+  path      String?
+  postId    String?
+  userAgent String?
+  ipHash    String?
+  timestamp DateTime @default(now())
+
+
+  @@map("analytics")
+}
+
+model SiteSettings {
+  id                  String   @id @default(cuid())
+  autoPublish         Boolean  @default(false)
+  postingSchedule     String   @default("weekly") // daily, weekly, biweekly
+  contentTopics       String[]
+  aiTone              String   @default("technical but friendly")
+  includeCodeExamples Boolean  @default(true)
+  minWordCount        Int      @default(800)
+  maxWordCount        Int      @default(1500)
+  updatedAt           DateTime @updatedAt
+
+  @@map("site_settings")
+}

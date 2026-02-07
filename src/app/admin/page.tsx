@@ -3,6 +3,9 @@ import { isAuthenticated } from '@/lib/auth/admin';
 import { PostsDB } from '@/lib/db/posts';
 import AdminStats from '@/components/admin/AdminStats';
 import PostsList from '@/components/admin/PostsList';
+import { Sparkles, BarChart3, Settings } from 'lucide-react';
+
+export const dynamic = 'force-dynamic';
 
 export default async function AdminDashboard() {
     const authenticated = await isAuthenticated();
@@ -64,18 +67,25 @@ export default async function AdminDashboard() {
                                 Quick Actions
                             </h3>
                             <div className="space-y-3">
-                                <button className="w-full px-4 py-4 bg-[rgb(var(--brand))] hover:opacity-90 text-black rounded-lg font-bold transition-all transform hover:scale-[1.02] text-left flex items-center gap-3 shadow-[0_0_15px_rgba(204,255,0,0.2)]">
-                                    <span className="text-xl">✨</span>
-                                    <span className="font-mono text-sm uppercase tracking-wide">Generate New Post</span>
-                                </button>
-                                <button className="w-full px-4 py-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg font-medium transition text-left flex items-center gap-3 text-white group">
-                                    <span className="group-hover:scale-110 transition-transform">📊</span>
+                                {/* Generate Post Button - triggers generation */}
+                                <form action="/api/generate" method="POST">
+                                    <button type="submit" className="w-full px-4 py-4 bg-[rgb(var(--brand))] hover:opacity-90 text-black rounded-lg font-bold transition-all transform hover:scale-[1.02] text-left flex items-center gap-3 shadow-[0_0_15px_rgba(204,255,0,0.2)]">
+                                        <Sparkles className="w-5 h-5" />
+                                        <span className="font-mono text-sm uppercase tracking-wide">Generate New Post (AI)</span>
+                                    </button>
+                                </form>
+
+                                {/* Analytics Link */}
+                                <a href="/admin/analytics" className="w-full px-4 py-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg font-medium transition text-left flex items-center gap-3 text-white group block">
+                                    <BarChart3 className="w-5 h-5 text-gray-400 group-hover:text-white transition-colors" />
                                     <span className="font-mono text-sm uppercase tracking-wide text-gray-300 group-hover:text-white">View Analytics</span>
-                                </button>
-                                <button className="w-full px-4 py-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg font-medium transition text-left flex items-center gap-3 text-white group">
-                                    <span className="group-hover:rotate-90 transition-transform">⚙️</span>
+                                </a>
+
+                                {/* Settings Link */}
+                                <a href="/admin/settings" className="w-full px-4 py-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg font-medium transition text-left flex items-center gap-3 text-white group block">
+                                    <Settings className="w-5 h-5 text-gray-400 group-hover:text-white transition-colors group-hover:rotate-90 transition-transform duration-500" />
                                     <span className="font-mono text-sm uppercase tracking-wide text-gray-300 group-hover:text-white">System Settings</span>
-                                </button>
+                                </a>
                             </div>
                         </div>
                     </div>

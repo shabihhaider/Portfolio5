@@ -2,20 +2,28 @@
 
 import { useEffect } from 'react';
 
-export default function CTASection() {
+interface Props {
+    postSlug: string;
+}
+
+export default function CTASection({ postSlug }: Props) {
     useEffect(() => {
         // Track view on mount
-        fetch('/api/analytics/cta', {
-            method: 'POST',
-            body: JSON.stringify({ event: 'view', location: 'blog_post_footer' }),
-        }).catch(() => { });
-    }, []);
+        if (postSlug) {
+            fetch('/api/analytics/cta', {
+                method: 'POST',
+                body: JSON.stringify({ postSlug, ctaType: 'blog_footer_view' }),
+            }).catch(() => { });
+        }
+    }, [postSlug]);
 
     const handleClick = () => {
-        fetch('/api/analytics/cta', {
-            method: 'POST',
-            body: JSON.stringify({ event: 'click', location: 'blog_post_footer' }),
-        }).catch(() => { });
+        if (postSlug) {
+            fetch('/api/analytics/cta', {
+                method: 'POST',
+                body: JSON.stringify({ postSlug, ctaType: 'blog_footer_click' }),
+            }).catch(() => { });
+        }
     };
 
     return (

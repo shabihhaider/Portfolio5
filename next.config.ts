@@ -16,6 +16,26 @@ const nextConfig: NextConfig = {
         protocol: 'https',
         hostname: 'opengraph.githubassets.com',
       },
+      {
+        protocol: 'https',
+        hostname: 'portfolio5-olive.vercel.app',
+      },
+      {
+        protocol: 'https',
+        hostname: 'res.cloudinary.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'placehold.co',
+      },
+      {
+        protocol: 'https',
+        hostname: 'shabih.tech',
+      },
+      {
+        protocol: 'https',
+        hostname: 'www.shabih.tech',
+      }
     ],
   },
 };

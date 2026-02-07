@@ -1,95 +1,95 @@
-import { getDb } from './mongodb';
-import { BlogPost } from './schema';
-import { ObjectId } from 'mongodb';
+import prisma from './prisma';
+import { Post, Prisma } from '@prisma/client';
+
+export type PostCreateInput = Prisma.PostCreateInput;
+export type PostUpdateInput = Prisma.PostUpdateInput;
 
 export class PostsDB {
-    static async getAll(status?: BlogPost['status']): Promise<BlogPost[]> {
-        const db = await getDb();
-        const query = status ? { status } : {};
-
-        return db
-            .collection<BlogPost>('posts')
-            .find(query)
-            .sort({ publishedAt: -1 })
-            .toArray();
+    static async getAll(status?: string): Promise<Post[]> {
+        const where = status ? { status } : {};
+        return prisma.post.findMany({
+            where,
+            orderBy: { publishedAt: 'desc' },
+        });
     }
 
-    static async getBySlug(slug: string): Promise<BlogPost | null> {
-        const db = await getDb();
-        return db.collection<BlogPost>('posts').findOne({ slug });
+    static async getBySlug(slug: string): Promise<Post | null> {
+        return prisma.post.findUnique({
+            where: { slug },
+        });
     }
 
-    static async create(post: Omit<BlogPost, '_id'>): Promise<ObjectId> {
-        const db = await getDb();
-        const result = await db.collection<BlogPost>('posts').insertOne({
-            ...post,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-            views: 0,
-            likes: 0,
-            ctaClicks: 0,
-        } as BlogPost);
-
-        return result.insertedId;
+    static async create(post: Omit<Post, 'id' | 'createdAt' | 'updatedAt' | 'views' | 'likes' | 'ctaClicks'>): Promise<string> {
+        const result = await prisma.post.create({
+            data: {
+                ...post,
+                status: post.status || 'draft',
+                views: 0,
+                likes: 0,
+                ctaClicks: 0,
+            },
+        });
+        return result.id;
     }
 
-    static async update(slug: string, updates: Partial<BlogPost>): Promise<boolean> {
-        const db = await getDb();
-        const result = await db.collection<BlogPost>('posts').updateOne(
-            { slug },
-            {
-                $set: {
-                    ...updates,
-                    updatedAt: new Date(),
-                }
-            }
-        );
-
-        return result.modifiedCount > 0;
+    static async update(slug: string, updates: PostUpdateInput): Promise<boolean> {
+        try {
+            await prisma.post.update({
+                where: { slug },
+                data: updates,
+            });
+            return true;
+        } catch (error) {
+            return false;
+        }
     }
 
     static async incrementViews(slug: string): Promise<void> {
-        const db = await getDb();
-        await db.collection<BlogPost>('posts').updateOne(
-            { slug },
-            { $inc: { views: 1 } }
-        );
+        try {
+            await prisma.post.update({
+                where: { slug },
+                data: { views: { increment: 1 } },
+            });
+        } catch (error) {
+            console.error('Failed to increment views:', error);
+        }
     }
 
     static async delete(slug: string): Promise<boolean> {
-        const db = await getDb();
-        const result = await db.collection<BlogPost>('posts').deleteOne({ slug });
-        return result.deletedCount > 0;
+        try {
+            await prisma.post.delete({
+                where: { slug },
+            });
+            return true;
+        } catch (error) {
+            console.error('PostsDB.delete error:', error);
+            return false;
+        }
     }
 
-    static async getPublishedPosts(): Promise<BlogPost[]> {
+    static async getPublishedPosts(): Promise<Post[]> {
         return this.getAll('published');
     }
 
-    static async getDrafts(): Promise<BlogPost[]> {
+    static async getDrafts(): Promise<Post[]> {
         return this.getAll('draft');
     }
 
-    static async getScheduledPosts(): Promise<BlogPost[]> {
+    static async getScheduledPosts(): Promise<Post[]> {
         return this.getAll('scheduled');
     }
 
     static async publishScheduledPosts(): Promise<void> {
-        const db = await getDb();
         const now = new Date();
-
-        await db.collection<BlogPost>('posts').updateMany(
-            {
+        await prisma.post.updateMany({
+            where: {
                 status: 'scheduled',
-                scheduledFor: { $lte: now }
+                publishedAt: { lte: now },
             },
-            {
-                $set: {
-                    status: 'published',
-                    publishedAt: now,
-                    updatedAt: now,
-                }
-            }
-        );
+            data: {
+                status: 'published',
+                updatedAt: now,
+            },
+        });
     }
 }

@@ -44,7 +44,15 @@ Writing style:
 - Teach something valuable
 - Share your journey and learnings
 - Provide actionable takeaways
-- Are SEO-friendly but not keyword-stuffed`;
+- Are SEO-friendly but not keyword-stuffed
+
+Your portfolio projects include:
+1. AI Fashion Stylist - Computer vision app using TensorFlow
+2. HydroPak Dashboard - SaaS admin panel with Next.js
+3. Unified Social Insights - Analytics platform
+4. Online Research Platform - Academic collaboration tool
+
+Write blog posts that feel like a genuine share from your development journey, not a generic tutorial.`;
 
     const userPrompt = `Write a comprehensive blog post about: ${topic}
 ${context ? `\nContext/Background:\n${context}` : ''}

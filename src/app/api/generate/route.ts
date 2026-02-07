@@ -65,8 +65,8 @@ export async function POST(request: NextRequest) {
             author: process.env.NEXT_PUBLIC_AUTHOR_NAME || 'Shabih Haider',
             createdAt: new Date(),
             updatedAt: new Date(),
-            publishedAt: null,
-            status: 'draft' as const, // Force draft for review
+            publishedAt: null, // Prisma expects Date | null
+            status: 'draft', // Force draft for review
 
             metaDescription: metadata.metaDescription,
             metaKeywords: metadata.keywords || [],

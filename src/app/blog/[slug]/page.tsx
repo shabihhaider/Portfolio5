@@ -41,10 +41,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
     return {
         title: post.title,
-        description: post.excerpt,
+        description: post.excerpt || undefined,
         openGraph: {
             title: post.title,
-            description: post.excerpt,
+            description: post.excerpt || undefined,
             type: 'article',
             publishedTime: post.publishedAt?.toString(),
             tags: post.tags,
@@ -97,7 +97,7 @@ export default async function BlogPostPage({ params }: Props) {
                         {post.title}
                     </h1>
 
-                    <div className="flex items-center justify-center gap-6 text-sm font-mono text-gray-400">
+                    <div className="flex items-center justify-center gap-6 text-sm font-mono text-gray-400 mb-12">
                         <div className="flex items-center gap-2">
                             <span className="w-8 h-8 rounded-full bg-gradient-to-br from-gray-700 to-gray-900 border border-white/20 flex items-center justify-center text-xs">SH</span>
                             <span>Shabih Haider</span>
@@ -107,6 +107,19 @@ export default async function BlogPostPage({ params }: Props) {
                         <span>•</span>
                         <span>{post.readingTime}</span>
                     </div>
+
+                    {/* Cover Image */}
+                    {post.coverImage && (
+                        <div className="relative w-full aspect-[2/1] rounded-2xl overflow-hidden border border-white/10 shadow-2xl">
+                            <Image
+                                src={post.coverImage.startsWith('http') || post.coverImage.startsWith('/') ? post.coverImage : '/placeholder.jpg'}
+                                alt={post.title}
+                                fill
+                                className="object-cover"
+                                priority
+                            />
+                        </div>
+                    )}
                 </header>
 
                 {/* Content */}
@@ -124,7 +137,7 @@ export default async function BlogPostPage({ params }: Props) {
 
                 {/* Footer */}
                 <div className="mt-20 pt-10 border-t border-white/10">
-                    <CTASection />
+                    <CTASection postSlug={post.slug} />
                 </div>
             </article>
         </div>

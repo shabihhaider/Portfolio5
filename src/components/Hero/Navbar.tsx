@@ -9,6 +9,7 @@ const navItems = [
     { label: "Work", href: "#work" },
     { label: "Process", href: "#process" },
     { label: "Stack", href: "#stack" },
+    { label: "Blog", href: "/blog" },
 ];
 
 export function Navbar() {

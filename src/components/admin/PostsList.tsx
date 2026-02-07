@@ -2,6 +2,79 @@
 
 import { BlogPost } from '@/lib/db/schema';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
+
+function PublishButton({ slug }: { slug: string }) {
+    const router = useRouter();
+
+    const handlePublish = async () => {
+        if (!confirm('Are you sure you want to publish this post?')) return;
+
+        try {
+            const res = await fetch('/api/posts/publish', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ slug }),
+            });
+
+            if (res.ok) {
+                router.refresh();
+            } else {
+                alert('Failed to publish');
+            }
+        } catch (e) {
+            alert('Error publishing post');
+        }
+    };
+
+    return (
+        <button
+            onClick={handlePublish}
+            className="text-gray-400 hover:text-green-400 text-sm font-bold font-mono border-b border-transparent hover:border-green-400 transition-all pb-0.5"
+        >
+            PUBLISH
+        </button>
+    );
+}
+
+function DeleteButton({ slug }: { slug: string }) {
+    const router = useRouter();
+    const [isDeleting, setIsDeleting] = useState(false);
+
+    const handleDelete = async () => {
+        console.log('Attempting to delete post with slug:', slug);
+        if (!confirm('💥 Are you sure? This cannot be undone.')) return;
+
+        setIsDeleting(true);
+        try {
+            const res = await fetch(`/api/posts/${slug}`, {
+                method: 'DELETE',
+            });
+
+            if (res.ok) {
+                router.refresh();
+            } else {
+                console.error('Delete failed:', res.status, data);
+                alert(`Failed to delete: ${data.error || res.statusText}`);
+            }
+        } catch (e) {
+            console.error('Delete error:', e);
+            alert('Error deleting post');
+        }
+        setIsDeleting(false);
+    };
+
+    return (
+        <button
+            onClick={handleDelete}
+            disabled={isDeleting}
+            className="text-gray-500 hover:text-red-500 text-sm font-bold font-mono border-b border-transparent hover:border-red-500 transition-all pb-0.5 disabled:opacity-50"
+        >
+            {isDeleting ? '...' : 'DELETE'}
+        </button>
+    );
+}
 
 export default function PostsList({ posts }: { posts: BlogPost[] }) {
     return (
@@ -46,8 +119,8 @@ export default function PostsList({ posts }: { posts: BlogPost[] }) {
                                     </span>
                                 </td>
                                 <td className="px-6 py-4 text-gray-400 text-sm font-mono">
-                                    {post.status === 'scheduled' && post.scheduledFor
-                                        ? new Date(post.scheduledFor).toLocaleDateString()
+                                    {post.status === 'scheduled' && post.publishedAt
+                                        ? new Date(post.publishedAt).toLocaleDateString()
                                         : new Date(post.createdAt).toLocaleDateString()}
                                 </td>
                                 <td className="px-6 py-4 text-gray-400 text-sm">
@@ -61,13 +134,21 @@ export default function PostsList({ posts }: { posts: BlogPost[] }) {
                                     <div className="text-xs opacity-50">Score: {post.qualityScore}/10</div>
                                 </td>
                                 <td className="px-6 py-4">
-                                    <Link
-                                        href={`/blog/${post.slug}`}
-                                        target="_blank"
-                                        className="text-[rgb(var(--brand))] hover:text-white text-sm font-bold font-mono border-b border-[rgb(var(--brand))] hover:border-white transition-all pb-0.5"
-                                    >
-                                        VIEW_POST
-                                    </Link>
+                                    <div className="flex items-center gap-3">
+                                        <Link
+                                            href={`/blog/${post.slug}`}
+                                            target="_blank"
+                                            className="text-[rgb(var(--brand))] hover:text-white text-sm font-bold font-mono border-b border-[rgb(var(--brand))] hover:border-white transition-all pb-0.5"
+                                        >
+                                            VIEW
+                                        </Link>
+
+                                        {post.status !== 'published' && (
+                                            <PublishButton slug={post.slug} />
+                                        )}
+
+                                        <DeleteButton slug={post.slug} />
+                                    </div>
                                 </td>
                             </tr>
                         ))}

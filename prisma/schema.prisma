@@ -43,6 +43,10 @@ model Post {
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 
+  @@index([status])
+  @@index([publishedAt])
+  @@index([scheduledFor])
+  @@index([slug])
   @@map("posts")
 }
 

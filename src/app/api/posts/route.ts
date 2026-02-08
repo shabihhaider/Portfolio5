@@ -27,21 +27,29 @@ export async function POST(request: NextRequest) {
     try {
         const body = await request.json();
 
-        // Validate required fields
-        if (!body.title || !body.content || !body.slug) {
+        // ✅ ADDED: Input validation with Zod
+        const { createPostSchema } = await import('@/lib/validation/schemas');
+        const validationResult = createPostSchema.safeParse(body);
+
+        if (!validationResult.success) {
             return NextResponse.json(
-                { error: 'Missing required fields' },
+                {
+                    error: 'Validation failed',
+                    details: validationResult.error.flatten().fieldErrors
+                },
                 { status: 400 }
             );
         }
 
-        const postId = await PostsDB.create(body);
+        const validatedData = validationResult.data;
+        const postId = await PostsDB.create(validatedData as any);
 
         return NextResponse.json(
             { success: true, postId },
             { status: 201 }
         );
     } catch (error) {
+        console.error('POST /api/posts error:', error);
         return NextResponse.json(
             { error: 'Failed to create post' },
             { status: 500 }

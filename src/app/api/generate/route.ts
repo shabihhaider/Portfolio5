@@ -6,6 +6,19 @@ import readingTime from 'reading-time';
 
 export async function POST(request: NextRequest) {
     try {
+        // ✅ FIXED: Security - Protect AI Generation Endpoint
+        const { isAuthenticated } = await import('@/lib/auth/admin');
+        if (!await isAuthenticated()) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
+        // ✅ FIXED: Rate Limiting
+        const { generateLimiter } = await import('@/lib/rate-limit');
+        const ip = request.headers.get('x-forwarded-for') || 'unknown';
+        if (!generateLimiter.check(ip)) {
+            return NextResponse.json({ error: 'Rate limit exceeded' }, { status: 429 });
+        }
+
         const body = await request.json().catch(() => ({}));
         const { topic: requestedTopic, context } = body;
 

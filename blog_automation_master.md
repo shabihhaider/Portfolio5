@@ -1,5 +1,10 @@
 # 🤖 AUTOMATED BLOG SYSTEM - COMPLETE IMPLEMENTATION GUIDE
 
+> [!CAUTION]
+> **DEPRECATED / OUTDATED DOCUMENTATION**
+> This document describes the initial plan using MongoDB. The actual implementation has evolved to use **Prisma + PostgreSQL**.
+> Do not rely on the database connection code or setup instructions in this file. Refer to `src/lib/db` and `prisma/schema.prisma` for the source of truth.
+
 **Portfolio:** Portfolio5 (Next.js + TypeScript + Tailwind)  
 **Objective:** Zero-maintenance, AI-powered blog with monetization infrastructure  
 **Cost:** $0 (using GitHub Student Pack resources)  

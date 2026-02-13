@@ -2,8 +2,8 @@ import { PostsDB } from '@/lib/db/posts';
 import BlogCard from '@/components/blog/BlogCard';
 import EmailCapture from '@/components/EmailCapture';
 
-// Force dynamic rendering to avoid build-time DB connection issues
-export const dynamic = 'force-dynamic';
+// ✅ FIXED: Performance - Use ISR instead of force-dynamic
+export const revalidate = 3600; // Revalidate every hour
 
 export default async function BlogPage() {
     const posts = await PostsDB.getPublishedPosts();

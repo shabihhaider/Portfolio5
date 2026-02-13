@@ -12,6 +12,7 @@ export default function CTASection({ postSlug }: Props) {
         if (postSlug) {
             fetch('/api/analytics/cta', {
                 method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ postSlug, ctaType: 'blog_footer_view' }),
             }).catch(() => { });
         }
@@ -21,6 +22,7 @@ export default function CTASection({ postSlug }: Props) {
         if (postSlug) {
             fetch('/api/analytics/cta', {
                 method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ postSlug, ctaType: 'blog_footer_click' }),
             }).catch(() => { });
         }

@@ -25,7 +25,8 @@ const prosemagnify = `
   prose-blockquote:border-l-4 prose-blockquote:border-[rgb(var(--brand))] prose-blockquote:bg-white/5 prose-blockquote:px-6 prose-blockquote:py-4 prose-blockquote:rounded-r-lg prose-blockquote:italic
 `;
 
-export const dynamic = 'force-dynamic';
+// ✅ FIXED: Performance - Use ISR
+export const revalidate = 3600;
 
 interface Props {
     params: Promise<{ slug: string }>;
@@ -46,7 +47,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
             title: post.title,
             description: post.excerpt || undefined,
             type: 'article',
-            publishedTime: post.publishedAt?.toString(),
+            publishedTime: post.publishedAt ? new Date(post.publishedAt).toISOString() : undefined,
             tags: post.tags,
             images: [
                 {

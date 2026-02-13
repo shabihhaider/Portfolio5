@@ -1,15 +1,32 @@
 import { MetadataRoute } from 'next';
+import { PostsDB } from '@/lib/db/posts';
 
-export default function sitemap(): MetadataRoute.Sitemap {
-    const baseUrl = 'https://portfolio-shabihhaider.vercel.app'; // Update with actual domain
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://portfolio5-olive.vercel.app';
 
-    return [
-        {
-            url: baseUrl,
-            lastModified: new Date(),
-            changeFrequency: 'monthly',
-            priority: 1,
-        },
-        // Add more routes here if you have multiple pages
-    ];
+    // Get all published posts
+    const posts = await PostsDB.getPublishedPosts();
+
+    // Base routes
+    const routes = [
+        '',
+        '/blog',
+        '/portfolio',
+        '/contact',
+    ].map((route) => ({
+        url: `${baseUrl}${route}`,
+        lastModified: new Date(),
+        changeFrequency: 'weekly' as const,
+        priority: route === '' ? 1 : 0.8,
+    }));
+
+    // Blog post routes
+    const postRoutes = posts.map((post) => ({
+        url: `${baseUrl}/blog/${post.slug}`,
+        lastModified: post.updatedAt || new Date(),
+        changeFrequency: 'monthly' as const,
+        priority: 0.7,
+    }));
+
+    return [...routes, ...postRoutes];
 }

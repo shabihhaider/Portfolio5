@@ -10,6 +10,13 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'Missing data' }, { status: 400 });
         }
 
+        // ✅ FIXED: Rate Limiting
+        const { apiLimiter } = await import('@/lib/rate-limit');
+        const ip = request.headers.get('x-forwarded-for') || 'unknown';
+        if (!apiLimiter.check(ip)) {
+            return NextResponse.json({ error: 'Rate limit exceeded' }, { status: 429 });
+        }
+
         // Track the click event
         await prisma.analytics.create({
             data: {

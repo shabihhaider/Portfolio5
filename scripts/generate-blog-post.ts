@@ -59,23 +59,45 @@ async function main() {
     }
 
     try {
-        // 1. Generate content
-        console.log('📝 Generating content with AI...');
-        const { content, model } = await generateBlogPost({
-            topic,
-            includeCode: true,
-            minWords: 600,
-            maxWords: 1500,
-            tags: extractTags(topic),
-        });
+        // 1. Generate content with retry logic
+        let qualityCheck;
+        let content = '';
+        let model = '';
+        let attempts = 0;
+        const MAX_ATTEMPTS = 3;
 
-        // 2. Quality check
-        console.log('✅ Checking content quality...');
-        const qualityCheck = checkContentQuality(content, 600);
+        while (attempts < MAX_ATTEMPTS) {
+            attempts++;
+            console.log(`📝 Generating content with AI (Attempt ${attempts}/${MAX_ATTEMPTS})...`);
 
-        if (!qualityCheck.passed) {
+            const result = await generateBlogPost({
+                topic,
+                includeCode: true,
+                minWords: 600,
+                maxWords: 1500,
+                tags: extractTags(topic),
+                // Add context about previous failure if this is a retry
+                context: attempts > 1 ? 'Previous attempt failed quality checks. Ensure sufficient length, headers, and code examples.' : undefined
+            });
+
+            content = result.content;
+            model = result.model;
+
+            console.log('✅ Checking content quality...');
+            qualityCheck = checkContentQuality(content, 600);
+
+            if (qualityCheck.passed) {
+                break;
+            }
+
             console.log('❌ Quality check failed:', qualityCheck.issues);
-            console.log('🔄 Regenerating with improvements...'); // In real scenario, retry logic here
+            if (attempts < MAX_ATTEMPTS) {
+                console.log('🔄 Retrying...');
+            }
+        }
+
+        if (!qualityCheck?.passed) {
+            console.error('❌ Failed to generate quality content after multiple attempts.');
             process.exit(1);
         }
 
@@ -92,14 +114,12 @@ async function main() {
         const stats = readingTime(content);
 
         // 4. Generate OG image URL
-        // Since we are running in script, we hardcode the URL structure or use env var
         const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://portfolio5-olive.vercel.app';
         const ogImageUrl = `${siteUrl}/api/og?title=${encodeURIComponent(metadata.title)}&tags=${encodeURIComponent((metadata.keywords || []).slice(0, 3).join(','))}`;
 
         // 5. Save to Database
         console.log('💾 Saving to database...');
 
-        // Check if slug exists
         let finalSlug = slug;
         const existing = await PostsDB.getBySlug(slug);
         if (existing) {
@@ -107,21 +127,20 @@ async function main() {
             finalSlug = `${slug}-${Date.now()}`;
         }
 
-        const post = {
+        // ✅ FIXED: Type Safety - No 'as any' cast
+        // We construct the object to match what PostsDB.create expects (Omit<Post, 'id' | ...>)
+        // We need to import Post type or just rely on structural typing if valid.
+        // The issue was 'as any'. Let's shape it correctly.
+
+        const postData = {
             slug: finalSlug,
             title: metadata.title,
             content,
-            excerpt: metadata.excerpt,
+            excerpt: metadata.excerpt || '', // Ensure string
             coverImage: ogImageUrl,
 
             author: process.env.NEXT_PUBLIC_AUTHOR_NAME || 'Shabih Haider',
-            createdAt: new Date(),
-            updatedAt: new Date(),
-            publishedAt: null,
-            status: 'draft', // Auto-publish logical workflow would be 'draft' then approved, or 'scheduled'
-            // Guide says: status: 'draft' // Will auto-publish in 48 hours
-            // And scheduledFor: 48 hours
-            scheduledFor: new Date(Date.now() + 48 * 60 * 60 * 1000),
+            status: 'draft',
 
             metaDescription: metadata.metaDescription,
             metaKeywords: metadata.keywords || [],
@@ -130,43 +149,32 @@ async function main() {
             tags: (metadata.keywords || []).slice(0, 5),
             category: categorize(metadata.keywords || []),
 
-            views: 0,
-            likes: 0,
             readingTime: stats.text,
 
             generatedBy: model,
             humanEdited: false,
             qualityScore: qualityCheck.score,
 
-            ctaClicks: 0,
+            publishedAt: null,
+            scheduledFor: new Date(Date.now() + 48 * 60 * 60 * 1000),
         };
 
-        // We can't pass 'status' string to create properly if types mismatched in phase 2 verification
-        // But we fixed the type to be BlogPost['status'] (union) or casted.
-        // Let's ensure types match.
-        // The PostsDB.create expects Omit<BlogPost, '_id'>.
-
-        await PostsDB.create(post as any); // Casting for safety in script
+        await PostsDB.create(postData);
 
         console.log('✅ Blog post created successfully!');
         console.log(`📝 Title: ${metadata.title}`);
         console.log(`🔗 Slug: ${finalSlug}`);
-        console.log(`📅 Scheduled for: ${post.scheduledFor.toISOString()}`);
+        console.log(`📅 Scheduled for: ${postData.scheduledFor.toISOString()}`);
         console.log(`📊 Quality: ${qualityCheck.score}/10`);
 
-        // Save output for GitHub Actions
-        // Using widely supported format
         const output = {
             success: true,
             slug: finalSlug,
             title: metadata.title,
-            scheduledFor: post.scheduledFor,
+            scheduledFor: postData.scheduledFor,
         };
-        // ::set-output is deprecated, using GITHUB_OUTPUT env if available, but for now log it
-        // The guide used set-output. I'll stick to matching the guide or modern standard.
-        // Modern: echo "result=..." >> $GITHUB_OUTPUT
-        // I'll leave the console log as guide had it, but also try to adhere to new standards if I write the YAML.
 
+        console.log(JSON.stringify(output));
         process.exit(0);
 
     } catch (error) {

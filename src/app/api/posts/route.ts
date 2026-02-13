@@ -8,6 +8,14 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
     const status = searchParams.get('status') as string | null;
 
+    // ✅ FIXED: Security - Only authenticated admins can fetch drafts/scheduled posts
+    if (status && status !== 'published') {
+        const { isAuthenticated } = await import('@/lib/auth/admin');
+        if (!await isAuthenticated()) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+    }
+
     try {
         const posts = status
             ? await PostsDB.getAll(status)
@@ -24,6 +32,12 @@ export async function GET(request: NextRequest) {
 
 // POST new post
 export async function POST(request: NextRequest) {
+    // ✅ FIXED: Security - Protect POST endpoint
+    const { isAuthenticated } = await import('@/lib/auth/admin');
+    if (!await isAuthenticated()) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     try {
         const body = await request.json();
 

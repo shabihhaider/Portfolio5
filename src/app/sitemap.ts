@@ -1,3 +1,4 @@
+import { MetadataRoute } from 'next';
 import { PostsDB } from '@/lib/db/posts';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {

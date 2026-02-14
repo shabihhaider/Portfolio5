@@ -1,10 +1,10 @@
 import { PostsDB } from '@/lib/db/posts';
 
 export async function GET() {
-    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://portfolio5-olive.vercel.app';
-    const posts = await PostsDB.getPublishedPosts();
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://portfolio5-olive.vercel.app';
+  const posts = await PostsDB.getPublishedPosts();
 
-    const feed = `<?xml version="1.0" encoding="UTF-8" ?>
+  const feed = `<?xml version="1.0" encoding="UTF-8" ?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Shabih Haider | Digital Lab Notes</title>
@@ -14,8 +14,8 @@ export async function GET() {
     <lastBuildDate>${new Date().toUTCString()}</lastBuildDate>
     <atom:link href="${baseUrl}/feed" rel="self" type="application/rss+xml" />
     ${posts
-            .map((post) => {
-                return `
+      .map((post) => {
+        return `
     <item>
       <title><![CDATA[${post.title}]]></title>
       <link>${baseUrl}/blog/${post.slug}</link>
@@ -24,14 +24,14 @@ export async function GET() {
       <description><![CDATA[${post.excerpt || ''}]]></description>
       ${post.tags.map(tag => `<category>${tag}</category>`).join('')}
     </item>`;
-            })
-            .join('')}
+      })
+      .join('')}
   </channel>
 </rss>`;
 
-    return new Response(feed, {
-        headers: {
-            'Content-Type': 'application/rss+xml; charset=utf-8',
-        },
-    });
+  return new Response(feed, {
+    headers: {
+      'Content-Type': 'application/rss+xml; charset=utf-8',
+    },
+  });
 }

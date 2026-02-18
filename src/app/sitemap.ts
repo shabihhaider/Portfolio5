@@ -1,18 +1,17 @@
 import { MetadataRoute } from 'next';
 import { PostsDB } from '@/lib/db/posts';
+import { site } from '@/lib/config/site';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://portfolio5-olive.vercel.app';
+    const baseUrl = site.url;
 
     // Get all published posts
     const posts = await PostsDB.getPublishedPosts();
 
-    // Base routes
+    // Base routes (only pages that actually exist)
     const routes = [
         '',
         '/blog',
-        '/portfolio',
-        '/contact',
     ].map((route) => ({
         url: `${baseUrl}${route}`,
         lastModified: new Date(),

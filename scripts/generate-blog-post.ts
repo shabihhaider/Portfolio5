@@ -7,77 +7,119 @@ dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
 
 // Dynamic imports to ensure env vars are loaded
 const importLib = async () => {
-    const { generateBlogPost, generatePostMetadata, generateSlug } = await import('../src/lib/ai/groq');
+    const { generateBlogPost, generatePostMetadata, generateSlug } = await import('../src/lib/ai/gemini');
+    const { discoverAndResearch } = await import('../src/lib/ai/topic-discovery');
     const { checkContentQuality } = await import('../src/lib/ai/quality-check');
     const { PostsDB } = await import('../src/lib/db/posts');
-    return { generateBlogPost, generatePostMetadata, generateSlug, checkContentQuality, PostsDB };
+    const config = await import('../src/lib/config/site');
+    return { generateBlogPost, generatePostMetadata, generateSlug, discoverAndResearch, checkContentQuality, PostsDB, config };
 };
 
-const TOPICS = [
-    'Building AI applications with TensorFlow and Next.js',
-    'Full-stack development best practices in 2026',
-    'Computer vision for beginners: practical guide',
-    'Next.js performance optimization techniques',
-    'MongoDB database design patterns',
-    'Real-world AI/ML project case studies',
-    'TypeScript tips for better code quality',
-    'Deploying ML models in production',
-    'React hooks and advanced patterns',
-    'Building SaaS applications from scratch',
-];
-
 async function main() {
-    // Load modules
-    const { generateBlogPost, generatePostMetadata, generateSlug, checkContentQuality, PostsDB } = await importLib();
-    // Dynamic import for prisma to avoid top-level issues
+    const { generateBlogPost, generatePostMetadata, generateSlug, discoverAndResearch, checkContentQuality, PostsDB, config } = await importLib();
     const { default: prisma } = await import('../src/lib/db/prisma');
 
-    let topic = process.argv[2];
-
-    // If no topic provided, try to fetch from Settings
-    if (!topic) {
-        try {
-            const settings = await prisma.siteSettings.findFirst();
-            if (settings && settings.contentTopics.length > 0) {
-                topic = settings.contentTopics[Math.floor(Math.random() * settings.contentTopics.length)];
-                console.log('🤖 Selected topic from Site Settings:', topic);
-            }
-        } catch (e) {
-            console.warn('⚠️ Could not fetch settings, using default topics.');
-        }
-    }
-
-    if (!topic) {
-        topic = TOPICS[Math.floor(Math.random() * TOPICS.length)];
-    }
-
-    console.log(`🤖 Generating blog post about: ${topic}`);
-
-    if (!process.env.GROQ_API_KEY) {
-        console.error('❌ GROQ_API_KEY not found');
+    if (!process.env.GEMINI_API_KEY) {
+        console.error('❌ GEMINI_API_KEY not found');
         process.exit(1);
     }
 
+    // ── Load Settings from Admin DB ───────────────────────
+    let settings: {
+        contentTopics?: string[];
+        aiTone?: string;
+        minWordCount?: number;
+        maxWordCount?: number;
+        includeCodeExamples?: boolean;
+        autoPublish?: boolean;
+    } = {};
     try {
-        // 1. Generate content with retry logic
+        const s = await prisma.siteSettings.findFirst();
+        if (s) settings = s;
+    } catch (e) {
+        console.warn('⚠️ Could not load site settings, using defaults.');
+    }
+
+    const focusAreas = settings.contentTopics?.length
+        ? settings.contentTopics
+        : config.defaultFocusAreas;
+    const minWords = settings.minWordCount || config.ai.defaults.minWords;
+    const maxWords = settings.maxWordCount || config.ai.defaults.maxWords;
+    const includeCode = settings.includeCodeExamples ?? true;
+    const tone = settings.aiTone || undefined;
+
+    // ── Determine Topic ──────────────────────────────────
+    const manualTopic = process.argv[2];
+    let topic: string;
+    let researchContext = '';
+
+    if (manualTopic) {
+        // Manual override — user passed a specific topic
+        topic = manualTopic;
+        console.log(`📌 Manual topic: "${topic}"`);
+    } else {
+        // ✨ AUTONOMOUS MODE — AI discovers trending topics & researches them
+        console.log('');
+        console.log('═══════════════════════════════════════════');
+        console.log('  🔍 AUTONOMOUS TOPIC DISCOVERY');
+        console.log('═══════════════════════════════════════════');
+        console.log(`  Focus areas: ${focusAreas.join(', ')}`);
+        console.log('');
+
+        try {
+            // Get existing post slugs to avoid duplicates
+            const existingPosts = await PostsDB.getPublishedPosts();
+            const draftPosts = await prisma.post.findMany({
+                select: { slug: true, title: true },
+                where: { status: { in: ['draft', 'approved', 'scheduled'] } }
+            });
+            const existingSlugs = [
+                ...existingPosts.map(p => p.slug),
+                ...draftPosts.map(p => p.title.toLowerCase()),
+            ];
+
+            const research = await discoverAndResearch([...focusAreas], existingSlugs);
+            topic = research.topic.title;
+            researchContext = buildResearchPrompt(research);
+
+            console.log('');
+            console.log('📊 Research Summary:');
+            console.log(`   Key points: ${research.keyPoints.length}`);
+            console.log(`   Recent developments: ${research.recentDevelopments.length}`);
+            console.log(`   Unique angles: ${research.uniqueAngles.length}`);
+            console.log(`   Sources found: ${research.sources.length}`);
+            console.log('');
+        } catch (error) {
+            console.warn('⚠️ Autonomous discovery failed, falling back to focus areas:', error);
+            topic = `Latest trends in ${focusAreas[Math.floor(Math.random() * focusAreas.length)]}`;
+        }
+    }
+
+    console.log(`🤖 Generating blog post about: "${topic}"`);
+
+    try {
+        // ── Generate Content ─────────────────────────────
         let qualityCheck;
         let content = '';
         let model = '';
         let attempts = 0;
-        const MAX_ATTEMPTS = 3;
+        const MAX_ATTEMPTS = config.ai.maxQualityAttempts;
 
         while (attempts < MAX_ATTEMPTS) {
             attempts++;
-            console.log(`📝 Generating content with AI (Attempt ${attempts}/${MAX_ATTEMPTS})...`);
+            console.log(`📝 Generating content (Attempt ${attempts}/${MAX_ATTEMPTS})...`);
 
             const result = await generateBlogPost({
                 topic,
-                includeCode: true,
-                minWords: 600,
-                maxWords: 1500,
+                tone,
+                includeCode,
+                minWords,
+                maxWords,
                 tags: extractTags(topic),
-                // Add context about previous failure if this is a retry
-                context: attempts > 1 ? 'Previous attempt failed quality checks. Ensure sufficient length, headers, and code examples.' : undefined
+                context: [
+                    researchContext,
+                    attempts > 1 ? 'Previous attempt failed quality checks. Ensure sufficient length, headers, and code examples.' : '',
+                ].filter(Boolean).join('\n\n'),
             });
 
             content = result.content;
@@ -86,14 +128,10 @@ async function main() {
             console.log('✅ Checking content quality...');
             qualityCheck = checkContentQuality(content, 600);
 
-            if (qualityCheck.passed) {
-                break;
-            }
+            if (qualityCheck.passed) break;
 
             console.log('❌ Quality check failed:', qualityCheck.issues);
-            if (attempts < MAX_ATTEMPTS) {
-                console.log('🔄 Retrying...');
-            }
+            if (attempts < MAX_ATTEMPTS) console.log('🔄 Retrying...');
         }
 
         if (!qualityCheck?.passed) {
@@ -103,78 +141,66 @@ async function main() {
 
         console.log(`✅ Quality score: ${qualityCheck.score}/10`);
 
-        // 3. Generate metadata
+        // ── Generate Metadata ────────────────────────────
         console.log('📊 Generating metadata...');
         const metadata = await generatePostMetadata(content, topic);
-        if (!metadata) {
-            throw new Error('Failed to generate metadata');
-        }
+        if (!metadata) throw new Error('Failed to generate metadata');
 
         const slug = await generateSlug(metadata.title);
         const stats = readingTime(content);
 
-        // 4. Generate OG image URL
-        const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://portfolio5-olive.vercel.app';
+        const siteUrl = config.site.url;
         const ogImageUrl = `${siteUrl}/api/og?title=${encodeURIComponent(metadata.title)}&tags=${encodeURIComponent((metadata.keywords || []).slice(0, 3).join(','))}`;
 
-        // 5. Save to Database
-        console.log('💾 Saving to database...');
-
+        // ── Save to Database ─────────────────────────────
         let finalSlug = slug;
         const existing = await PostsDB.getBySlug(slug);
         if (existing) {
-            console.log('⚠️ Post with this slug already exists, adding timestamp');
+            console.log('⚠️ Slug exists, adding timestamp');
             finalSlug = `${slug}-${Date.now()}`;
         }
 
-        // ✅ FIXED: Type Safety - No 'as any' cast
-        // We construct the object to match what PostsDB.create expects (Omit<Post, 'id' | ...>)
-        // We need to import Post type or just rely on structural typing if valid.
-        // The issue was 'as any'. Let's shape it correctly.
-
         const postData = {
             slug: finalSlug,
-            title: metadata.title,
-            content,
-            excerpt: metadata.excerpt || '', // Ensure string
+            title: String(metadata.title),
+            content: String(content),
+            excerpt: String(metadata.excerpt || ''),
             coverImage: ogImageUrl,
-
-            author: process.env.NEXT_PUBLIC_AUTHOR_NAME || 'Shabih Haider',
-            status: 'draft',
-
-            metaDescription: metadata.metaDescription,
-            metaKeywords: metadata.keywords || [],
+            author: process.env.NEXT_PUBLIC_AUTHOR_NAME || config.author.name,
+            status: 'draft' as const,
+            metaDescription: String(metadata.metaDescription || ''),
+            metaKeywords: (metadata.keywords || []).map(String),
             ogImage: ogImageUrl,
-
-            tags: (metadata.keywords || []).slice(0, 5),
-            category: categorize(metadata.keywords || []),
-
+            tags: (metadata.keywords || []).map(String).slice(0, 5),
+            category: categorize((metadata.keywords || []).map(String)),
             readingTime: stats.text,
-
-            generatedBy: model,
+            generatedBy: String(model),
             humanEdited: false,
-            qualityScore: qualityCheck.score,
-
+            qualityScore: Number(qualityCheck.score) || 0,
             publishedAt: null,
-            scheduledFor: new Date(Date.now() + 48 * 60 * 60 * 1000),
+            scheduledFor: new Date(Date.now() + config.ai.schedulingDelayMs),
         };
 
+        console.log('💾 Saving to database...');
         await PostsDB.create(postData);
 
-        console.log('✅ Blog post created successfully!');
-        console.log(`📝 Title: ${metadata.title}`);
-        console.log(`🔗 Slug: ${finalSlug}`);
-        console.log(`📅 Scheduled for: ${postData.scheduledFor.toISOString()}`);
-        console.log(`📊 Quality: ${qualityCheck.score}/10`);
+        console.log('');
+        console.log('═══════════════════════════════════════════');
+        console.log('  ✅ BLOG POST CREATED SUCCESSFULLY');
+        console.log('═══════════════════════════════════════════');
+        console.log(`  📝 Title: ${metadata.title}`);
+        console.log(`  🔗 Slug: ${finalSlug}`);
+        console.log(`  📅 Scheduled: ${postData.scheduledFor.toISOString()}`);
+        console.log(`  📊 Quality: ${qualityCheck.score}/10`);
+        console.log(`  🤖 Model: ${model}`);
+        console.log('═══════════════════════════════════════════');
 
-        const output = {
+        console.log(JSON.stringify({
             success: true,
             slug: finalSlug,
             title: metadata.title,
             scheduledFor: postData.scheduledFor,
-        };
-
-        console.log(JSON.stringify(output));
+        }));
         process.exit(0);
 
     } catch (error) {
@@ -183,21 +209,57 @@ async function main() {
     }
 }
 
+/**
+ * Build a rich research context string for the content generator.
+ */
+function buildResearchPrompt(research: {
+    topic: { title: string; angle: string; whyTrending: string };
+    keyPoints: string[];
+    recentDevelopments: string[];
+    uniqueAngles: string[];
+    sources: string[];
+    researchContext: string;
+}): string {
+    const sections = [
+        `RESEARCH CONTEXT (from real web sources):`,
+        `Topic: ${research.topic.title}`,
+        `Why it's trending: ${research.topic.whyTrending}`,
+        `Unique angle to take: ${research.topic.angle}`,
+        '',
+        research.researchContext,
+        '',
+    ];
+
+    if (research.keyPoints.length > 0) {
+        sections.push('Key technical points discovered:');
+        research.keyPoints.forEach(p => sections.push(`- ${p}`));
+        sections.push('');
+    }
+
+    if (research.recentDevelopments.length > 0) {
+        sections.push('Recent developments:');
+        research.recentDevelopments.forEach(d => sections.push(`- ${d}`));
+        sections.push('');
+    }
+
+    if (research.uniqueAngles.length > 0) {
+        sections.push('Unique angles most articles miss:');
+        research.uniqueAngles.forEach(a => sections.push(`- ${a}`));
+        sections.push('');
+    }
+
+    sections.push('IMPORTANT: Write an ORIGINAL post informed by this research. Do NOT copy or paraphrase any source directly. Use the facts and insights to write from YOUR authentic developer perspective.');
+
+    return sections.join('\n');
+}
+
 function extractTags(topic: string): string[] {
-    const tagMap: Record<string, string[]> = {
-        'AI': ['AI/ML', 'Artificial Intelligence'],
-        'TensorFlow': ['TensorFlow', 'Machine Learning'],
-        'Next.js': ['Next.js', 'React', 'Web Development'],
-        'TypeScript': ['TypeScript', 'JavaScript'],
-        'MongoDB': ['MongoDB', 'Database'],
-        'performance': ['Performance', 'Optimization'],
-        'SaaS': ['SaaS', 'Full-Stack'],
-    };
+    const { tagMap } = require('../src/lib/config/site');
 
     const tags: string[] = [];
     for (const [key, values] of Object.entries(tagMap)) {
         if (topic.toLowerCase().includes(key.toLowerCase())) {
-            tags.push(...values);
+            tags.push(...(values as string[]));
         }
     }
 
@@ -205,16 +267,14 @@ function extractTags(topic: string): string[] {
 }
 
 function categorize(keywords: string[]): string {
-    if (keywords.some(k => ['AI', 'ML', 'TensorFlow', 'PyTorch'].includes(k))) {
-        return 'AI/Machine Learning';
+    const { categoryRules, defaultCategory } = require('../src/lib/config/site');
+
+    for (const rule of categoryRules) {
+        if (keywords.some((k: string) => rule.keywords.includes(k))) {
+            return rule.category;
+        }
     }
-    if (keywords.some(k => ['Next.js', 'React', 'TypeScript'].includes(k))) {
-        return 'Web Development';
-    }
-    if (keywords.some(k => ['MongoDB', 'PostgreSQL', 'Database'].includes(k))) {
-        return 'Backend';
-    }
-    return 'General';
+    return defaultCategory;
 }
 
 main();

@@ -5,77 +5,142 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
-function PublishButton({ slug }: { slug: string }) {
-    const router = useRouter();
+function ActionButton({
+    onClick,
+    label,
+    loadingLabel,
+    className,
+    confirm: confirmMsg,
+}: {
+    onClick: () => Promise<void>;
+    label: string;
+    loadingLabel?: string;
+    className: string;
+    confirm?: string;
+}) {
+    const [loading, setLoading] = useState(false);
 
-    const handlePublish = async () => {
-        if (!confirm('Are you sure you want to publish this post?')) return;
-
+    const handleClick = async () => {
+        if (confirmMsg && !confirm(confirmMsg)) return;
+        setLoading(true);
         try {
-            const res = await fetch('/api/posts/publish', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ slug }),
-            });
-
-            if (res.ok) {
-                router.refresh();
-            } else {
-                alert('Failed to publish');
-            }
-        } catch (e) {
-            alert('Error publishing post');
+            await onClick();
+        } finally {
+            setLoading(false);
         }
     };
 
     return (
         <button
-            onClick={handlePublish}
-            className="text-gray-400 hover:text-green-400 text-sm font-bold font-mono border-b border-transparent hover:border-green-400 transition-all pb-0.5"
+            onClick={handleClick}
+            disabled={loading}
+            className={`text-sm font-bold font-mono border-b border-transparent transition-all pb-0.5 disabled:opacity-50 ${className}`}
         >
-            PUBLISH
+            {loading ? (loadingLabel || '...') : label}
         </button>
+    );
+}
+
+function ApproveButton({ slug }: { slug: string }) {
+    const router = useRouter();
+
+    return (
+        <ActionButton
+            label="APPROVE"
+            className="text-gray-400 hover:text-blue-400 hover:border-blue-400"
+            confirm="Approve this post for publishing?"
+            onClick={async () => {
+                const res = await fetch(`/api/posts/${slug}/approve`, { method: 'POST' });
+                if (res.ok) router.refresh();
+                else alert('Failed to approve');
+            }}
+        />
+    );
+}
+
+function RejectButton({ slug }: { slug: string }) {
+    const router = useRouter();
+
+    return (
+        <ActionButton
+            label="REJECT"
+            className="text-gray-500 hover:text-red-400 hover:border-red-400"
+            confirm="Reject this post?"
+            onClick={async () => {
+                const res = await fetch(`/api/posts/${slug}/reject`, { method: 'POST' });
+                if (res.ok) router.refresh();
+                else alert('Failed to reject');
+            }}
+        />
+    );
+}
+
+function RegenerateButton({ slug }: { slug: string }) {
+    const router = useRouter();
+
+    return (
+        <ActionButton
+            label="REGEN"
+            loadingLabel="GENERATING..."
+            className="text-gray-400 hover:text-purple-400 hover:border-purple-400"
+            confirm="Reject this post and generate a fresh replacement?"
+            onClick={async () => {
+                const res = await fetch(`/api/posts/${slug}/regenerate`, { method: 'POST' });
+                if (res.ok) router.refresh();
+                else alert('Failed to regenerate');
+            }}
+        />
+    );
+}
+
+function PublishButton({ slug }: { slug: string }) {
+    const router = useRouter();
+
+    return (
+        <ActionButton
+            label="PUBLISH"
+            className="text-gray-400 hover:text-green-400 hover:border-green-400"
+            confirm="Are you sure you want to publish this post?"
+            onClick={async () => {
+                const res = await fetch('/api/posts/publish', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ slug }),
+                });
+                if (res.ok) router.refresh();
+                else alert('Failed to publish');
+            }}
+        />
     );
 }
 
 function DeleteButton({ slug }: { slug: string }) {
     const router = useRouter();
-    const [isDeleting, setIsDeleting] = useState(false);
-
-    const handleDelete = async () => {
-        console.log('Attempting to delete post with slug:', slug);
-        if (!confirm('💥 Are you sure? This cannot be undone.')) return;
-
-        setIsDeleting(true);
-        try {
-            const res = await fetch(`/api/posts/${slug}`, {
-                method: 'DELETE',
-            });
-
-            if (res.ok) {
-                router.refresh();
-            } else {
-                const data = await res.json();
-                console.error('Delete failed:', res.status, data);
-                alert(`Failed to delete: ${data.error || res.statusText}`);
-            }
-        } catch (e) {
-            console.error('Delete error:', e);
-            alert('Error deleting post');
-        }
-        setIsDeleting(false);
-    };
 
     return (
-        <button
-            onClick={handleDelete}
-            disabled={isDeleting}
-            className="text-gray-500 hover:text-red-500 text-sm font-bold font-mono border-b border-transparent hover:border-red-500 transition-all pb-0.5 disabled:opacity-50"
-        >
-            {isDeleting ? '...' : 'DELETE'}
-        </button>
+        <ActionButton
+            label="DELETE"
+            className="text-gray-500 hover:text-red-500 hover:border-red-500"
+            confirm="💥 Are you sure? This cannot be undone."
+            onClick={async () => {
+                const res = await fetch(`/api/posts/${slug}`, { method: 'DELETE' });
+                if (res.ok) router.refresh();
+                else {
+                    const data = await res.json().catch(() => ({}));
+                    alert(`Failed to delete: ${data.error || 'Unknown error'}`);
+                }
+            }}
+        />
     );
 }
+
+const STATUS_STYLES: Record<string, string> = {
+    published: 'bg-green-500/10 text-green-400 border border-green-500/20',
+    approved: 'bg-blue-500/10 text-blue-400 border border-blue-500/20',
+    scheduled: 'bg-purple-500/10 text-purple-400 border border-purple-500/20',
+    draft: 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20',
+    rejected: 'bg-red-500/10 text-red-400 border border-red-500/20',
+};
 
 export default function PostsList({ posts }: { posts: BlogPost[] }) {
     return (
@@ -109,12 +174,7 @@ export default function PostsList({ posts }: { posts: BlogPost[] }) {
                                 </td>
                                 <td className="px-6 py-4">
                                     <span
-                                        className={`px-3 py-1 rounded-full text-xs font-bold font-mono tracking-wide ${post.status === 'published'
-                                            ? 'bg-[rgb(var(--brand))]/10 text-[rgb(var(--brand))] border border-[rgb(var(--brand))]/20'
-                                            : post.status === 'scheduled'
-                                                ? 'bg-purple-500/10 text-purple-500 border border-purple-500/20'
-                                                : 'bg-yellow-500/10 text-yellow-500 border border-yellow-500/20'
-                                            }`}
+                                        className={`px-3 py-1 rounded-full text-xs font-bold font-mono tracking-wide ${STATUS_STYLES[post.status] || STATUS_STYLES.draft}`}
                                     >
                                         {post.status.toUpperCase()}
                                     </span>
@@ -135,7 +195,7 @@ export default function PostsList({ posts }: { posts: BlogPost[] }) {
                                     <div className="text-xs opacity-50">Score: {post.qualityScore}/10</div>
                                 </td>
                                 <td className="px-6 py-4">
-                                    <div className="flex items-center gap-3">
+                                    <div className="flex items-center gap-3 flex-wrap">
                                         <Link
                                             href={`/blog/${post.slug}`}
                                             target="_blank"
@@ -144,8 +204,27 @@ export default function PostsList({ posts }: { posts: BlogPost[] }) {
                                             VIEW
                                         </Link>
 
-                                        {post.status !== 'published' && (
-                                            <PublishButton slug={post.slug} />
+                                        {/* Draft: approve, reject, regenerate, publish, delete */}
+                                        {post.status === 'draft' && (
+                                            <>
+                                                <ApproveButton slug={post.slug} />
+                                                <RejectButton slug={post.slug} />
+                                                <RegenerateButton slug={post.slug} />
+                                                <PublishButton slug={post.slug} />
+                                            </>
+                                        )}
+
+                                        {/* Approved/Scheduled: publish now or reject */}
+                                        {(post.status === 'approved' || post.status === 'scheduled') && (
+                                            <>
+                                                <PublishButton slug={post.slug} />
+                                                <RejectButton slug={post.slug} />
+                                            </>
+                                        )}
+
+                                        {/* Rejected: regenerate or delete */}
+                                        {post.status === 'rejected' && (
+                                            <RegenerateButton slug={post.slug} />
                                         )}
 
                                         <DeleteButton slug={post.slug} />

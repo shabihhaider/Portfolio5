@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { newsletter } from '@/lib/config/site';
 
 export default function EmailCapture() {
     const [email, setEmail] = useState('');
@@ -20,15 +21,15 @@ export default function EmailCapture() {
 
             if (res.ok) {
                 setStatus('success');
-                setMessage('Transmission link established. Welcome to the network.');
+                setMessage(newsletter.successMessage);
                 setEmail('');
             } else {
                 setStatus('error');
-                setMessage('Connection failed. Please retry transmission.');
+                setMessage(newsletter.errorMessage);
             }
         } catch (err) {
             setStatus('error');
-            setMessage('System error. Network unreachable.');
+            setMessage(newsletter.systemError);
         }
     };
 
@@ -40,14 +41,14 @@ export default function EmailCapture() {
             <div className="relative z-10 text-center max-w-lg mx-auto">
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[rgb(var(--brand))]/10 border border-[rgb(var(--brand))]/20 text-[rgb(var(--brand))] text-xs font-mono mb-4">
                     <span className="w-1.5 h-1.5 rounded-full bg-[rgb(var(--brand))] animate-pulse"></span>
-                    NETWORK_UPLINK
+                    {newsletter.badge}
                 </div>
 
                 <h3 className="text-2xl font-bold text-white mb-3 font-heading">
-                    Join the <span className="text-[rgb(var(--brand))]">Inner Circle</span>
+                    {newsletter.heading.split(newsletter.headingHighlight)[0]}<span className="text-[rgb(var(--brand))]">{newsletter.headingHighlight}</span>{newsletter.heading.split(newsletter.headingHighlight)[1]}
                 </h3>
                 <p className="text-gray-400 mb-8 max-w-sm mx-auto">
-                    Get weekly drops on Full Stack engineering, AI agents, and Cyberpunk UI design directly to your inbox.
+                    {newsletter.description}
                 </p>
 
                 <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3">
@@ -55,7 +56,7 @@ export default function EmailCapture() {
                         type="email"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        placeholder="enter_email_address"
+                        placeholder={newsletter.placeholder}
                         required
                         className="flex-1 bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-white placeholder:text-gray-600 focus:border-[rgb(var(--brand))] focus:ring-1 focus:ring-[rgb(var(--brand))] outline-none transition-all font-mono text-sm"
                     />

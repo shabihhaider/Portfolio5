@@ -1,14 +1,15 @@
 "use client";
 
 import { FaGithub, FaLinkedin, FaInstagram, FaHeart } from "react-icons/fa6";
+import { author } from "@/lib/config/site";
 
 export function Footer() {
     const currentYear = new Date().getFullYear();
 
     const socialLinks = [
-        { icon: FaGithub, href: "https://github.com/shabihhaider", label: "GitHub" },
-        { icon: FaLinkedin, href: "https://www.linkedin.com/in/muhammad-shabih-haider/", label: "LinkedIn" },
-        { icon: FaInstagram, href: "https://www.instagram.com/muhammadshabihhaider/", label: "Instagram" },
+        { icon: FaGithub, href: author.social.github, label: "GitHub" },
+        { icon: FaLinkedin, href: author.social.linkedin, label: "LinkedIn" },
+        { icon: FaInstagram, href: author.social.instagram, label: "Instagram" },
     ];
 
     const navLinks = [
@@ -27,10 +28,10 @@ export function Footer() {
                     {/* Brand */}
                     <div className="space-y-4">
                         <h3 className="text-2xl font-heading font-bold text-white">
-                            Shabih<span className="text-brand">.</span>
+                            {author.name.split(' ')[0]}<span className="text-brand">.</span>
                         </h3>
                         <p className="text-sm text-gray-500 font-mono">
-                            Digital Alchemist | Full-Stack Developer
+                            {author.title}
                         </p>
                     </div>
 
@@ -77,7 +78,7 @@ export function Footer() {
                 <div className="flex flex-col md:flex-row items-center justify-between gap-4">
                     {/* Copyright */}
                     <p className="text-sm text-gray-600 font-mono">
-                        © {currentYear} Muhammad Shabih Haider. All rights reserved.
+                        © {currentYear} {author.fullName}. All rights reserved.
                     </p>
 
                     {/* Built With */}

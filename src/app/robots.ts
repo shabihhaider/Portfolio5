@@ -1,14 +1,13 @@
 import { MetadataRoute } from 'next';
+import { site } from '@/lib/config/site';
 
 export default function robots(): MetadataRoute.Robots {
-    const baseUrl = 'https://portfolio-shabihhaider.vercel.app'; // Update with actual domain
-
     return {
         rules: {
             userAgent: '*',
             allow: '/',
             disallow: '/private/',
         },
-        sitemap: `${baseUrl}/sitemap.xml`,
+        sitemap: `${site.url}/sitemap.xml`,
     };
 }

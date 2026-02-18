@@ -35,8 +35,6 @@ export async function createAdminToken(): Promise<string> {
 }
 
 export async function isAuthenticated(): Promise<boolean> {
-    const cookieStore = await cookies();
-    const token = cookieStore.get('admin_token')?.value;
     const secret = process.env.JWT_SECRET;
 
     if (!secret) {
@@ -44,14 +42,45 @@ export async function isAuthenticated(): Promise<boolean> {
         return false;
     }
 
-    if (!token) return false;
-
-    try {
-        jwt.verify(token, secret);
-        return true;
-    } catch {
-        return false;
+    // 1. Check cookie-based auth (admin UI)
+    const cookieStore = await cookies();
+    const cookieToken = cookieStore.get('admin_token')?.value;
+    if (cookieToken) {
+        try {
+            jwt.verify(cookieToken, secret);
+            return true;
+        } catch {
+            // Fall through to header check
+        }
     }
+
+    // 2. Check Authorization header (for API/cron/GitHub Actions calls)
+    // This reads from the request headers via next/headers
+    const { headers } = await import('next/headers');
+    try {
+        const headerStore = await headers();
+        const authHeader = headerStore.get('authorization');
+        if (authHeader?.startsWith('Bearer ')) {
+            const bearerToken = authHeader.slice(7);
+
+            // Accept ADMIN_API_TOKEN (static token for automation)
+            if (process.env.ADMIN_API_TOKEN && bearerToken === process.env.ADMIN_API_TOKEN) {
+                return true;
+            }
+
+            // Also accept a valid JWT
+            try {
+                jwt.verify(bearerToken, secret);
+                return true;
+            } catch {
+                // Invalid JWT
+            }
+        }
+    } catch {
+        // headers() not available in some contexts
+    }
+
+    return false;
 }
 
 export async function loginAdmin() {

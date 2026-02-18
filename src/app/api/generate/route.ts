@@ -1,18 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { generateBlogPost, generatePostMetadata, generateSlug } from '@/lib/ai/groq';
+import { generateBlogPost, generatePostMetadata, generateSlug } from '@/lib/ai/gemini';
 import { checkContentQuality } from '@/lib/ai/quality-check';
+import { discoverAndResearch } from '@/lib/ai/topic-discovery';
 import { PostsDB } from '@/lib/db/posts';
+import { author, site, ai, defaultFocusAreas, tagMap, categoryRules, defaultCategory } from '@/lib/config/site';
+import prisma from '@/lib/db/prisma';
 import readingTime from 'reading-time';
 
+/**
+ * POST /api/generate
+ * Full autonomous pipeline: discover → research → generate → quality check → save
+ * Called by GitHub Actions cron (Mon/Wed/Fri) or manually from admin.
+ */
 export async function POST(request: NextRequest) {
     try {
-        // ✅ FIXED: Security - Protect AI Generation Endpoint
+        // ── Auth ──────────────────────────────────────────
         const { isAuthenticated } = await import('@/lib/auth/admin');
         if (!await isAuthenticated()) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        // ✅ FIXED: Rate Limiting
+        // ── Rate Limiting ─────────────────────────────────
         const { generateLimiter } = await import('@/lib/rate-limit');
         const ip = request.headers.get('x-forwarded-for') || 'unknown';
         if (!generateLimiter.check(ip)) {
@@ -20,36 +28,77 @@ export async function POST(request: NextRequest) {
         }
 
         const body = await request.json().catch(() => ({}));
-        const { topic: requestedTopic, context } = body;
+        const { topic: manualTopic } = body;
 
-        const topic = requestedTopic || 'The future of AI in Web Development';
+        // ── Load Admin Settings ───────────────────────────
+        let settings: {
+            contentTopics?: string[];
+            aiTone?: string;
+            minWordCount?: number;
+            maxWordCount?: number;
+            includeCodeExamples?: boolean;
+        } = {};
+        try {
+            const s = await prisma.siteSettings.findFirst();
+            if (s) settings = s;
+        } catch { /* use defaults */ }
 
-        console.log(`🤖 Generating blog post about: ${topic}`);
+        const focusAreas = settings.contentTopics?.length
+            ? settings.contentTopics
+            : [...defaultFocusAreas];
+        const minWords = settings.minWordCount || ai.defaults.minWords;
+        const maxWords = settings.maxWordCount || ai.defaults.maxWords;
+        const includeCode = settings.includeCodeExamples ?? true;
+        const tone = settings.aiTone || undefined;
 
-        // 1. Generate content
+        // ── Determine Topic ───────────────────────────────
+        let topic: string;
+        let researchContext = '';
+
+        if (manualTopic) {
+            // Manual topic passed in request body
+            topic = manualTopic;
+            console.log(`🤖 Manual topic: "${topic}"`);
+        } else {
+            // Autonomous discovery
+            console.log(`🔍 Autonomous topic discovery...`);
+
+            const existingPosts = await PostsDB.getAll();
+            const existingSlugs = existingPosts.map(p => p.slug);
+
+            const research = await discoverAndResearch(focusAreas as string[], existingSlugs);
+            topic = research.topic.title;
+
+            // Build research context for the content generator
+            const parts: string[] = [`Research context for: "${topic}"`];
+            if (research.keyPoints.length) parts.push(`Key points: ${research.keyPoints.join('; ')}`);
+            if (research.recentDevelopments.length) parts.push(`Recent developments: ${research.recentDevelopments.join('; ')}`);
+            if (research.uniqueAngles.length) parts.push(`Unique angles: ${research.uniqueAngles.join('; ')}`);
+            if (research.researchContext) parts.push(`Summary: ${research.researchContext}`);
+            researchContext = parts.join('\n\n');
+        }
+
+        // ── Generate Content ──────────────────────────────
         const { content, model } = await generateBlogPost({
             topic,
-            context,
-            includeCode: true,
-            minWords: 800,
-            maxWords: 1500,
+            context: researchContext,
+            includeCode,
+            minWords,
+            maxWords,
+            tone,
         });
 
-        // 2. Quality check
-        const qualityCheck = checkContentQuality(content, 800);
+        // ── Quality Check ─────────────────────────────────
+        const qualityCheck = checkContentQuality(content, Math.floor(minWords * 0.75));
 
         if (!qualityCheck.passed) {
             return NextResponse.json(
-                {
-                    error: 'Quality check failed',
-                    issues: qualityCheck.issues,
-                    score: qualityCheck.score
-                },
+                { error: 'Quality check failed', issues: qualityCheck.issues, score: qualityCheck.score },
                 { status: 422 }
             );
         }
 
-        // 3. Generate metadata
+        // ── Metadata ──────────────────────────────────────
         const metadata = await generatePostMetadata(content, topic);
         if (!metadata) {
             return NextResponse.json({ error: 'Failed to generate metadata' }, { status: 500 });
@@ -57,44 +106,54 @@ export async function POST(request: NextRequest) {
 
         const baseSlug = await generateSlug(metadata.title);
         let slug = baseSlug;
-
-        // Check if slug exists
         const existing = await PostsDB.getBySlug(slug);
-        if (existing) {
-            slug = `${baseSlug}-${Date.now()}`;
+        if (existing) slug = `${baseSlug}-${Date.now()}`;
+
+        // ── Derive tags & category ────────────────────────
+        const keywords: string[] = metadata.keywords || [];
+        const resolvedTags = new Set<string>();
+        keywords.forEach(kw => {
+            for (const [key, tags] of Object.entries(tagMap)) {
+                if (kw.toLowerCase().includes(key.toLowerCase())) {
+                    tags.forEach(t => resolvedTags.add(t));
+                }
+            }
+            resolvedTags.add(kw);
+        });
+
+        let category = defaultCategory;
+        for (const rule of categoryRules) {
+            if (rule.keywords.some(k => keywords.some(kw => kw.toLowerCase().includes(k.toLowerCase())))) {
+                category = rule.category;
+                break;
+            }
         }
 
+        // ── Save ──────────────────────────────────────────
         const stats = readingTime(content);
-        const ogImageUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/api/og?title=${encodeURIComponent(metadata.title)}&tags=${encodeURIComponent((metadata.keywords || []).slice(0, 3).join(','))}`;
+        const ogImageUrl = `${site.url}/api/og?title=${encodeURIComponent(metadata.title)}&tags=${encodeURIComponent([...resolvedTags].slice(0, 3).join(','))}`;
 
-        // 4. Save to Database
         const postData = {
             slug,
             title: metadata.title,
             content,
-            excerpt: metadata.excerpt,
+            excerpt: metadata.excerpt || '',
             coverImage: ogImageUrl,
-
-            author: process.env.NEXT_PUBLIC_AUTHOR_NAME || 'Shabih Haider',
-            publishedAt: null, // Prisma expects Date | null
-            scheduledFor: null, // Prisma expects Date | null
-            status: 'draft', // Force draft for review
-
+            author: author.name,
+            publishedAt: null,
+            scheduledFor: new Date(Date.now() + ai.schedulingDelayMs),
+            status: 'draft',
             metaDescription: metadata.metaDescription,
-            metaKeywords: metadata.keywords || [],
+            metaKeywords: keywords,
             ogImage: ogImageUrl,
-
-            tags: (metadata.keywords || []).slice(0, 5),
-            category: 'Tech', // Simplified
-
+            tags: [...resolvedTags].slice(0, 5),
+            category,
             views: 0,
             likes: 0,
             readingTime: stats.text,
-
             generatedBy: model,
             humanEdited: false,
             qualityScore: qualityCheck.score,
-
             ctaClicks: 0,
         };
 
@@ -105,43 +164,22 @@ export async function POST(request: NextRequest) {
             postId,
             slug,
             title: metadata.title,
-            qualityScore: qualityCheck.score
+            qualityScore: qualityCheck.score,
+            scheduledFor: postData.scheduledFor,
         });
-
     } catch (error) {
         console.error('Generation Error:', error);
+        const msg = error instanceof Error ? error.message : 'Unknown error';
 
-        // Provide more specific error messages
-        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-        const errorStack = error instanceof Error ? error.stack : '';
-
-        console.error('Error details:', {
-            message: errorMessage,
-            stack: errorStack,
-            hasGroqKey: !!process.env.GROQ_API_KEY,
-            hasDatabaseUrl: !!process.env.DATABASE_URL,
-        });
-
-        // Check for specific error types
-        if (errorMessage.includes('GROQ_API_KEY')) {
-            return NextResponse.json(
-                { error: 'AI service not configured. Please add GROQ_API_KEY to environment variables.' },
-                { status: 500 }
-            );
+        if (msg.includes('GEMINI_API_KEY')) {
+            return NextResponse.json({ error: 'AI service not configured' }, { status: 500 });
         }
-
-        if (errorMessage.includes('DATABASE_URL') || errorMessage.includes('prisma')) {
-            return NextResponse.json(
-                { error: 'Database connection failed. Please check DATABASE_URL environment variable.' },
-                { status: 500 }
-            );
+        if (msg.includes('DATABASE_URL') || msg.includes('prisma')) {
+            return NextResponse.json({ error: 'Database connection failed' }, { status: 500 });
         }
 
         return NextResponse.json(
-            {
-                error: 'Failed to generate content',
-                details: process.env.NODE_ENV === 'development' ? errorMessage : undefined
-            },
+            { error: 'Failed to generate content', details: process.env.NODE_ENV === 'development' ? msg : undefined },
             { status: 500 }
         );
     }

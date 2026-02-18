@@ -13,13 +13,15 @@ export default async function AdminDashboard() {
         redirect('/admin/login');
     }
 
-    const [publishedPosts, drafts, scheduled] = await Promise.all([
+    const [publishedPosts, drafts, scheduled, approved, rejected] = await Promise.all([
         PostsDB.getPublishedPosts(),
         PostsDB.getDrafts(),
         PostsDB.getScheduledPosts(),
+        PostsDB.getApprovedPosts(),
+        PostsDB.getRejectedPosts(),
     ]);
 
-    const allPosts = [...drafts, ...scheduled, ...publishedPosts].sort(
+    const allPosts = [...drafts, ...approved, ...scheduled, ...rejected, ...publishedPosts].sort(
         (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     );
 

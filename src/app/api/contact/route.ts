@@ -1,5 +1,6 @@
 import { Resend } from 'resend';
 import { NextResponse } from 'next/server';
+import { author } from '@/lib/config/site';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -18,7 +19,7 @@ export async function POST(request: Request) {
         // Send email to you (notification)
         await resend.emails.send({
             from: 'Portfolio Contact <onboarding@resend.dev>',
-            to: 'shabihhaider191@gmail.com',
+            to: author.email,
             subject: `🚀 New Message from Portfolio - ${name}`,
             html: `
                 <div style="font-family: 'JetBrains Mono', monospace; background: #0A0A0A; color: #fff; padding: 40px; border-radius: 12px;">
@@ -46,7 +47,7 @@ export async function POST(request: Request) {
                     
                     <div style="border-top: 1px solid #222; padding-top: 20px; margin-top: 30px;">
                         <p style="color: #666; font-size: 12px; margin: 0;">
-                            Sent via Muhammad Shabih Haider's Portfolio • ${new Date().toLocaleString()}
+                            Sent via ${author.fullName}'s Portfolio • ${new Date().toLocaleString()}
                         </p>
                     </div>
                 </div>

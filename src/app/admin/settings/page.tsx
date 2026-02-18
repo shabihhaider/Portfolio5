@@ -163,7 +163,8 @@ export default function SettingsPage() {
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-gray-400 mb-2">Topics of Interest</label>
+                            <label className="block text-sm font-medium text-gray-400 mb-1">Focus Areas</label>
+                            <p className="text-xs text-gray-600 mb-3">Broad themes that guide AI topic discovery. The AI searches the web for trending topics within these areas — you don&apos;t need to specify exact post titles.</p>
                             <div className="flex gap-2 mb-2 flex-wrap">
                                 {settings.contentTopics?.map(topic => (
                                     <span key={topic} className="px-3 py-1 bg-[rgb(var(--brand))]/10 text-[rgb(var(--brand))] rounded-full text-sm flex items-center gap-2">
@@ -177,7 +178,7 @@ export default function SettingsPage() {
                                     type="text"
                                     value={topicInput}
                                     onChange={e => setTopicInput(e.target.value)}
-                                    placeholder="Add a new topic..."
+                                    placeholder="e.g. AI/ML, Web Performance, DevOps..."
                                     className="flex-1 bg-black/50 border border-white/10 rounded-lg px-4 py-2 text-white focus:border-[rgb(var(--brand))] focus:outline-none"
                                     onKeyDown={e => e.key === 'Enter' && addTopic()}
                                 />

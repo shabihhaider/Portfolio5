@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { useState } from "react";
 import { FaGithub, FaLinkedin, FaInstagram, FaCheck, FaCopy } from "react-icons/fa6";
+import { author } from "@/lib/config/site";
 
 export function Contact() {
     const [formState, setFormState] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
@@ -35,15 +36,15 @@ export function Contact() {
     };
 
     const copyEmail = () => {
-        navigator.clipboard.writeText('shabihhaider191@gmail.com');
+        navigator.clipboard.writeText(author.email);
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
     };
 
     const socialLinks = [
-        { icon: FaGithub, href: "https://github.com/shabihhaider", label: "GitHub" },
-        { icon: FaLinkedin, href: "https://www.linkedin.com/in/muhammad-shabih-haider/", label: "LinkedIn" },
-        { icon: FaInstagram, href: "https://www.instagram.com/muhammadshabihhaider/", label: "Instagram" },
+        { icon: FaGithub, href: author.social.github, label: "GitHub" },
+        { icon: FaLinkedin, href: author.social.linkedin, label: "LinkedIn" },
+        { icon: FaInstagram, href: author.social.instagram, label: "Instagram" },
     ];
 
     return (
@@ -106,7 +107,7 @@ export function Contact() {
                                 onClick={copyEmail}
                                 className="group flex items-center gap-3 text-lg font-mono text-white hover:text-brand transition-colors"
                             >
-                                <span>shabihhaider191@gmail.com</span>
+                                <span>{author.email}</span>
                                 <span className="p-2 rounded-lg bg-white/5 group-hover:bg-brand/20 transition-colors">
                                     {copied ? (
                                         <FaCheck className="text-brand" />

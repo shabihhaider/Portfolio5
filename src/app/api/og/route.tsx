@@ -1,5 +1,6 @@
 import { ImageResponse } from '@vercel/og';
 import { NextRequest } from 'next/server';
+import { author, ogBranding } from '@/lib/config/site';
 
 export const runtime = 'edge';
 
@@ -18,8 +19,8 @@ export async function GET(request: NextRequest) {
                     flexDirection: 'column',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    backgroundColor: '#000',
-                    backgroundImage: 'radial-gradient(circle at 25px 25px, #333 2%, transparent 0%), radial-gradient(circle at 75px 75px, #333 2%, transparent 0%)',
+                    backgroundColor: ogBranding.bgColor,
+                    backgroundImage: `radial-gradient(circle at 25px 25px, ${ogBranding.dotColor} 2%, transparent 0%), radial-gradient(circle at 75px 75px, ${ogBranding.dotColor} 2%, transparent 0%)`,
                     backgroundSize: '100px 100px',
                 }}
             >
@@ -36,7 +37,7 @@ export async function GET(request: NextRequest) {
                         style={{
                             fontSize: '72px',
                             fontWeight: 'bold',
-                            background: 'linear-gradient(to right, #06b6d4, #8b5cf6, #ec4899)',
+                            background: ogBranding.titleGradient,
                             backgroundClip: 'text',
                             color: 'transparent',
                             marginBottom: '20px',
@@ -52,11 +53,11 @@ export async function GET(request: NextRequest) {
                                 key={i}
                                 style={{
                                     padding: '8px 20px',
-                                    background: 'rgba(6, 182, 212, 0.2)',
-                                    color: '#06b6d4',
+                                    background: ogBranding.tagBg,
+                                    color: ogBranding.tagColor,
                                     borderRadius: '20px',
                                     fontSize: '24px',
-                                    border: '2px solid rgba(6, 182, 212, 0.3)',
+                                    border: `2px solid ${ogBranding.tagBorder}`,
                                 }}
                             >
                                 #{tag.trim()}
@@ -74,19 +75,19 @@ export async function GET(request: NextRequest) {
                         }}
                     >
                         <span style={{ fontSize: '32px', color: '#fff', fontWeight: 'bold' }}>
-                            Shabih Haider
+                            {author.name}
                         </span>
                         <span style={{ fontSize: '24px', color: '#666' }}>•</span>
                         <span style={{ fontSize: '28px', color: '#999' }}>
-                            Digital Lab Notes
+                            {ogBranding.blogName}
                         </span>
                     </div>
                 </div>
             </div>
         ),
         {
-            width: 1200,
-            height: 630,
+            width: ogBranding.width,
+            height: ogBranding.height,
         }
     );
 }

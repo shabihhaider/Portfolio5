@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter, Space_Grotesk, JetBrains_Mono } from "next/font/google";
+import { author, site, seo } from "@/lib/config/site";
 import "./globals.css";
 
 const inter = Inter({
@@ -19,26 +20,26 @@ const jetbrainsMono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "Shabih Haider | Full Stack Developer",
-    template: "%s | Shabih Haider",
+    default: seo.titleDefault,
+    template: seo.titleTemplate,
   },
-  description: "Portfolio of Shabih Haider, a Full Stack Developer specializing in React, Next.js, AI Integration, and Modern Web Technologies. View my projects and skills.",
-  keywords: ["Full Stack Developer", "React", "Next.js", "Portfolio", "Web Development", "AI", "Shabih Haider"],
-  authors: [{ name: "Shabih Haider" }],
-  creator: "Shabih Haider",
+  description: seo.description,
+  keywords: [...seo.keywords],
+  authors: [{ name: author.name }],
+  creator: author.name,
   openGraph: {
     type: "website",
-    locale: "en_US",
-    url: "https://portfolio-shabihhaider.vercel.app",
-    title: "Shabih Haider | Full Stack Developer",
-    description: "Building the impossible with modern web technologies and AI.",
-    siteName: "Shabih Haider Portfolio",
+    locale: site.locale,
+    url: site.url,
+    title: seo.titleDefault,
+    description: seo.ogDescription,
+    siteName: site.name,
   },
   twitter: {
     card: "summary_large_image",
-    title: "Shabih Haider | Full Stack Developer",
-    description: "Building the impossible with modern web technologies and AI.",
-    creator: "@shabihhaider",
+    title: seo.titleDefault,
+    description: seo.ogDescription,
+    creator: author.twitter,
   },
   robots: {
     index: true,

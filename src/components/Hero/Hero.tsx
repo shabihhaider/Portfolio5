@@ -7,6 +7,7 @@ import Link from "next/link";
 import { AnimatedBackground } from "@/components/ui/AnimatedBackground";
 import { Navbar } from "./Navbar";
 import { ScrollIndicator } from "./ScrollIndicator";
+import { author } from "@/lib/config/site";
 
 const containerVariants = {
     hidden: { opacity: 0 },
@@ -49,11 +50,12 @@ export function Hero() {
                     variants={itemVariants}
                     className="mb-4 flex items-center justify-center gap-3 text-sm sm:text-base font-mono tracking-wider"
                 >
-                    <span className="text-gray-300">Full-Stack Developer</span>
-                    <span className="text-brand">•</span>
-                    <span className="text-gray-300">AI Enthusiast</span>
-                    <span className="text-brand">•</span>
-                    <span className="text-gray-300">Tech Innovator</span>
+                    {author.roles.map((role, i) => (
+                        <span key={role} className="contents">
+                            {i > 0 && <span className="text-brand">•</span>}
+                            <span className="text-gray-300">{role}</span>
+                        </span>
+                    ))}
                 </motion.div>
 
                 {/* Headline */}
@@ -61,9 +63,9 @@ export function Hero() {
                     variants={itemVariants}
                     className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-heading font-bold tracking-tight leading-[0.9] text-foreground"
                 >
-                    MUHAMMAD
+                    {author.fullName.split(' ').slice(0, -1).join(' ').toUpperCase()}
                     <br />
-                    <span className="text-gradient-animated text-shadow-neon">SHABIH HAIDER</span>
+                    <span className="text-gradient-animated text-shadow-neon">{author.fullName.split(' ').slice(-1)[0].toUpperCase()}</span>
                 </motion.h1>
 
                 {/* Sub-headline */}
@@ -71,7 +73,7 @@ export function Hero() {
                     variants={itemVariants}
                     className="mt-6 text-lg sm:text-xl text-gray-400 max-w-xl font-light tracking-wide"
                 >
-                    Crafting intelligent web experiences with React & AI.
+                    {author.bio}
                 </motion.p>
 
                 {/* CTAs */}

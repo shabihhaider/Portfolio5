@@ -18,7 +18,7 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: 'https',
-        hostname: 'portfolio5-olive.vercel.app',
+        hostname: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://portfolio5-olive.vercel.app').hostname,
       },
       {
         protocol: 'https',

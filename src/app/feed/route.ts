@@ -1,16 +1,17 @@
 import { PostsDB } from '@/lib/db/posts';
+import { site, blog } from '@/lib/config/site';
 
 export async function GET() {
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://portfolio5-olive.vercel.app';
+  const baseUrl = site.url;
   const posts = await PostsDB.getPublishedPosts();
 
   const feed = `<?xml version="1.0" encoding="UTF-8" ?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>Shabih Haider | Digital Lab Notes</title>
+    <title>${blog.rssTitle}</title>
     <link>${baseUrl}</link>
-    <description>Exploring the frontiers of Full Stack development, AI agents, and Cyberpunk interfaces.</description>
-    <language>en-us</language>
+    <description>${blog.rssDescription}</description>
+    <language>${site.language}</language>
     <lastBuildDate>${new Date().toUTCString()}</lastBuildDate>
     <atom:link href="${baseUrl}/feed" rel="self" type="application/rss+xml" />
     ${posts

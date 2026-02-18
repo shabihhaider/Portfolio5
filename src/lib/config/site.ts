@@ -137,6 +137,12 @@ Writing style:
 - Provide actionable takeaways
 - Are SEO-friendly but not keyword-stuffed
 
+IMPORTANT formatting rules:
+- Use ONLY standard Markdown: headings (#), bold (**), italic (*), lists (- or 1.), code blocks (\`\`\`), blockquotes (>), links, and images.
+- Do NOT use custom JSX components like <Callout>, <Note>, <Tip>, <Warning>, <Alert>, <Tabs>, or any similar tags.
+- For callouts or tips, use a blockquote with bold label instead: > **💡 Tip:** Your text here
+- Do NOT include import or export statements.
+
 Your real-world portfolio experience to draw anecdotes from:
 
 1. AI Fashion Stylist (TensorFlow + React)

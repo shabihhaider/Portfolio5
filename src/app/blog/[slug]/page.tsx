@@ -5,12 +5,20 @@ import remarkGfm from 'remark-gfm';
 import CTASection from '@/components/blog/CTASection';
 import ReadingProgress from '@/components/blog/ReadingProgress';
 import CodeBlock from '@/components/blog/CodeBlock';
+import Callout from '@/components/blog/Callout';
 import { author, blog } from '@/lib/config/site';
 import { Metadata } from 'next';
 import Link from 'next/link';
 
+// Map every JSX component the AI might emit
 const mdxComponents = {
     pre: CodeBlock,
+    Callout,
+    Note: Callout,
+    Tip: (props: React.ComponentProps<typeof Callout>) => <Callout type="tip" {...props} />,
+    Warning: (props: React.ComponentProps<typeof Callout>) => <Callout type="warning" {...props} />,
+    Info: (props: React.ComponentProps<typeof Callout>) => <Callout type="info" {...props} />,
+    Danger: (props: React.ComponentProps<typeof Callout>) => <Callout type="danger" {...props} />,
 };
 
 // Next.js requires segment config to be a static literal
@@ -61,6 +69,28 @@ function cleanContent(raw: string): string {
 
     // Remove import statements (MDX tries to execute them)
     content = content.replace(/^import\s+.*?;\s*$/gm, '');
+
+    // Remove export statements (default/named) that MDX can't handle
+    content = content.replace(/^export\s+(default\s+)?.*?;\s*$/gm, '');
+
+    // Strip unknown self-closing JSX tags (e.g. <Component />) that aren't in our map
+    const known = Object.keys(mdxComponents).join('|');
+    const unknownSelfClosing = new RegExp(`<(?!(?:${known}|[a-z]))[A-Z]\\w*\\b[^>]*/>`, 'g');
+    content = content.replace(unknownSelfClosing, '');
+
+    // Convert unknown opening/closing JSX blocks to blockquotes
+    // e.g. <SomeComponent>...</SomeComponent> → > ...
+    const unknownBlock = new RegExp(
+        `<(?!(?:${known}|[a-z]))[A-Z](\\w*)\\b[^>]*>([\\s\\S]*?)</[A-Z]\\1>`,
+        'g',
+    );
+    content = content.replace(unknownBlock, (_m, _tag, inner) =>
+        inner
+            .trim()
+            .split('\n')
+            .map((l: string) => `> ${l}`)
+            .join('\n'),
+    );
 
     // Remove leading blank lines
     content = content.replace(/^\s*\n+/, '');

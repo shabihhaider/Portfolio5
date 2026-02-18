@@ -13,7 +13,8 @@ const mdxComponents = {
     pre: CodeBlock,
 };
 
-export const revalidate = blog.revalidateSeconds;
+// Next.js requires segment config to be a static literal
+export const revalidate = 3600;
 
 interface Props {
     params: Promise<{ slug: string }>;

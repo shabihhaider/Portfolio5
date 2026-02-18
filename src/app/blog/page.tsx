@@ -4,10 +4,16 @@ import EmailCapture from '@/components/EmailCapture';
 import { blog, author } from '@/lib/config/site';
 import Link from 'next/link';
 
-export const revalidate = blog.revalidateSeconds;
+// Next.js requires segment config to be a static literal
+export const revalidate = 3600;
 
 export default async function BlogPage() {
-    const posts = await PostsDB.getPublishedPosts();
+    let posts: Awaited<ReturnType<typeof PostsDB.getPublishedPosts>> = [];
+    try {
+        posts = await PostsDB.getPublishedPosts();
+    } catch (e) {
+        console.error('Failed to fetch posts:', e);
+    }
     const [featured, ...rest] = posts;
 
     return (

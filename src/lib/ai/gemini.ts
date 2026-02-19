@@ -181,9 +181,12 @@ CRITICAL: Return ONLY the JSON object. No markdown fences, no explanation, no pr
         const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
         if (jsonMatch) cleaned = jsonMatch[0];
 
+        // Strip control chars EXCEPT \n (0x0A), \r (0x0D), \t (0x09)
         cleaned = cleaned
-            .replace(/[\x00-\x1F\x7F]/g, ' ')
+            .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '')
             .replace(/,\s*([}\]])/g, '$1');
+
+        console.log(`📦 JSON response length: ${cleaned.length} chars`);
 
         parsed = JSON.parse(cleaned);
 
@@ -195,20 +198,41 @@ CRITICAL: Return ONLY the JSON object. No markdown fences, no explanation, no pr
             throw new Error('Missing or invalid seo_title in response');
         }
     } catch (parseError) {
-        console.error('❌ JSON parse failed, attempting plain text fallback...');
-        // If JSON parse fails, treat the entire response as markdown content
-        // and generate basic metadata from it
-        const text = result.text;
-        const titleLine = text.split('\n').find(l => l.startsWith('#'))?.replace(/^#+\s*/, '') || topic;
-        const plainText = text.replace(/[#*`\n\r]/g, ' ').replace(/\s+/g, ' ').trim();
+        console.error('❌ JSON parse failed:', parseError);
+        console.error('📄 Raw response (first 500 chars):', result.text.slice(0, 500));
 
-        parsed = {
-            seo_title: titleLine.slice(0, 55),
-            meta_description: plainText.slice(0, 155),
-            slug: titleLine.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60),
-            tags: topic.split(/[\s,]+/).filter(w => w.length > 3).slice(0, 5),
-            post_body: text,
-        };
+        // Try to extract post_body directly from the raw text via regex
+        const bodyMatch = result.text.match(/"post_body"\s*:\s*"([\s\S]*?)"\s*[,}]\s*$/);
+        if (bodyMatch) {
+            const extractedBody = bodyMatch[1]
+                .replace(/\\n/g, '\n')
+                .replace(/\\"/g, '"')
+                .replace(/\\\\/g, '\\');
+            console.log('🔧 Extracted post_body via regex fallback');
+            const titleLine = extractedBody.split('\n').find(l => l.startsWith('#'))?.replace(/^#+\s*/, '') || topic;
+            parsed = {
+                seo_title: titleLine.slice(0, 55),
+                meta_description: extractedBody.replace(/[#*`\n\r]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 155),
+                slug: titleLine.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60),
+                tags: topic.split(/[\s,]+/).filter(w => w.length > 3).slice(0, 5),
+                post_body: extractedBody,
+            };
+        } else {
+            // Last resort: treat as plain markdown (only if it looks like markdown, not JSON)
+            const text = result.text;
+            if (text.trim().startsWith('{')) {
+                throw new Error(`Gemini returned invalid JSON that could not be parsed. First 200 chars: ${text.slice(0, 200)}`);
+            }
+            const titleLine = text.split('\n').find(l => l.startsWith('#'))?.replace(/^#+\s*/, '') || topic;
+            const plainText = text.replace(/[#*`\n\r]/g, ' ').replace(/\s+/g, ' ').trim();
+            parsed = {
+                seo_title: titleLine.slice(0, 55),
+                meta_description: plainText.slice(0, 155),
+                slug: titleLine.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60),
+                tags: topic.split(/[\s,]+/).filter(w => w.length > 3).slice(0, 5),
+                post_body: text,
+            };
+        }
     }
 
     // Enforce field constraints

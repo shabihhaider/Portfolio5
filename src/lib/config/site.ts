@@ -90,7 +90,7 @@ export const ai = {
     backoffBaseMs: 5000,
     generation: {
         temperature: 0.7,
-        maxOutputTokens: 2048,
+        maxOutputTokens: 4096,
     },
     metadata: {
         temperature: 0.2,

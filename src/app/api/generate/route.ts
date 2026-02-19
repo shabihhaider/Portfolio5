@@ -82,35 +82,62 @@ export async function POST(request: NextRequest) {
             researchContext = parts.join('\n\n');
         }
 
-        // ── Generate Content (Single-Pass JSON) ──────────
-        const { content: rawContent, metadata, model } = await generateBlogPost({
-            topic,
-            context: researchContext,
-            includeSetupSteps,
-            minWords,
-            maxWords,
-            tone,
-            internalLink,
-            sponsorEnabled: settings.sponsorEnabled,
-            sponsorText: settings.sponsorText,
-            sponsorLink: settings.sponsorLink,
-        });
+        // ── Generate Content (Single-Pass JSON) with retry ──
+        const MAX_ATTEMPTS = ai.maxQualityAttempts;
+        let content = '';
+        let metadata;
+        let model = '';
+        let qualityCheck;
+        let lastIssues: string[] = [];
 
-        // Sanitize
-        const content = sanitizeContent(rawContent);
+        for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+            console.log(`📝 Generate attempt ${attempt}/${MAX_ATTEMPTS}...`);
 
-        // ── Quality Check (100-point rubric) ──────────────
-        const qualityCheck = checkContentQuality(content);
+            try {
+                const result = await generateBlogPost({
+                    topic,
+                    context: [
+                        researchContext,
+                        attempt > 1 ? `Previous attempt failed quality checks: ${lastIssues.join('; ')}. Fix ALL issues this time.` : '',
+                    ].filter(Boolean).join('\n\n'),
+                    includeSetupSteps,
+                    minWords,
+                    maxWords,
+                    tone,
+                    internalLink,
+                    sponsorEnabled: settings.sponsorEnabled,
+                    sponsorText: settings.sponsorText,
+                    sponsorLink: settings.sponsorLink,
+                });
 
-        if (!qualityCheck.passed) {
+                content = sanitizeContent(result.content);
+                metadata = result.metadata;
+                model = result.model;
+            } catch (genError) {
+                console.error(`❌ Generation attempt ${attempt} failed:`, genError);
+                if (attempt === MAX_ATTEMPTS) throw genError;
+                continue;
+            }
+
+            // ── Quality Check (100-point rubric) ──────────────
+            qualityCheck = checkContentQuality(content);
+            console.log(`📊 Quality score: ${qualityCheck.score}/100 (attempt ${attempt})`);
+
+            if (qualityCheck.passed) break;
+
+            lastIssues = qualityCheck.issues;
+            console.log(`❌ Quality check failed (attempt ${attempt}):`, lastIssues);
+        }
+
+        if (!qualityCheck?.passed) {
             return NextResponse.json(
-                { error: 'Quality check failed', issues: qualityCheck.issues, score: qualityCheck.score, breakdown: qualityCheck.breakdown },
+                { error: 'Quality check failed after retries', issues: qualityCheck?.issues || lastIssues, score: qualityCheck?.score || 0, breakdown: qualityCheck?.breakdown || {} },
                 { status: 422 }
             );
         }
 
         // ── Validate ─────────────────────────────────────
-        const validation = validatePost(content, { title: metadata.seo_title, metaDescription: metadata.meta_description });
+        const validation = validatePost(content, { title: metadata!.seo_title, metaDescription: metadata!.meta_description });
         if (!validation.passed) {
             return NextResponse.json(
                 { error: 'Validation failed', issues: validation.issues },
@@ -119,13 +146,13 @@ export async function POST(request: NextRequest) {
         }
 
         // ── Use metadata from single-pass response ───────
-        const slug = metadata.slug || await generateSlug(metadata.seo_title);
+        const slug = metadata!.slug || await generateSlug(metadata!.seo_title);
         let finalSlug = slug;
         const existing = await PostsDB.getBySlug(finalSlug);
         if (existing) finalSlug = `${slug}-${Date.now()}`;
 
         // ── Derive tags & category ────────────────────────
-        const keywords: string[] = metadata.tags || [];
+        const keywords: string[] = metadata!.tags || [];
         const resolvedTags = new Set<string>();
         keywords.forEach(kw => {
             for (const [key, tags] of Object.entries(tagMap)) {
@@ -146,19 +173,19 @@ export async function POST(request: NextRequest) {
 
         // ── Save ──────────────────────────────────────────
         const stats = readingTime(content);
-        const ogImageUrl = `${site.url}/api/og?title=${encodeURIComponent(metadata.seo_title)}&tags=${encodeURIComponent([...resolvedTags].slice(0, 3).join(','))}`;
+        const ogImageUrl = `${site.url}/api/og?title=${encodeURIComponent(metadata!.seo_title)}&tags=${encodeURIComponent([...resolvedTags].slice(0, 3).join(','))}`;
 
         const postData = {
             slug: finalSlug,
-            title: metadata.seo_title,
+            title: metadata!.seo_title,
             content,
-            excerpt: metadata.meta_description || '',
+            excerpt: metadata!.meta_description || '',
             coverImage: ogImageUrl,
             author: author.name,
             publishedAt: null,
             scheduledFor: new Date(Date.now() + ai.schedulingDelayMs),
             status: 'draft',
-            metaDescription: metadata.meta_description,
+            metaDescription: metadata!.meta_description,
             metaKeywords: keywords,
             ogImage: ogImageUrl,
             tags: [...resolvedTags].slice(0, 5),
@@ -178,7 +205,7 @@ export async function POST(request: NextRequest) {
             success: true,
             postId,
             slug: finalSlug,
-            title: metadata.seo_title,
+            title: metadata!.seo_title,
             qualityScore: qualityCheck.score,
             autoPublish: qualityCheck.autoPublish,
             scheduledFor: postData.scheduledFor,

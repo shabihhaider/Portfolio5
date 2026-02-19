@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { generateBlogPost, generatePostMetadata, generateSlug } from '@/lib/ai/gemini';
+import { generateBlogPost, generateSlug } from '@/lib/ai/gemini';
 import { checkContentQuality } from '@/lib/ai/quality-check';
 import { sanitizeContent } from '@/lib/ai/sanitize';
 import { validatePost } from '@/lib/ai/validate-post';
@@ -11,7 +11,7 @@ import readingTime from 'reading-time';
 
 /**
  * POST /api/generate
- * Full autonomous pipeline: discover → research → generate → quality check → save
+ * Full autonomous pipeline: discover → research → generate (single-pass JSON) → quality check → save
  * Called by GitHub Actions cron (Mon/Wed/Fri) or manually from admin.
  */
 export async function POST(request: NextRequest) {
@@ -38,7 +38,11 @@ export async function POST(request: NextRequest) {
             aiTone?: string;
             minWordCount?: number;
             maxWordCount?: number;
-            includeCodeExamples?: boolean;
+            includeSetupSteps?: boolean;
+            internalLink?: string;
+            sponsorEnabled?: boolean;
+            sponsorText?: string;
+            sponsorLink?: string;
         } = {};
         try {
             const s = await prisma.siteSettings.findFirst();
@@ -50,19 +54,18 @@ export async function POST(request: NextRequest) {
             : [...defaultFocusAreas];
         const minWords = settings.minWordCount || ai.defaults.minWords;
         const maxWords = settings.maxWordCount || ai.defaults.maxWords;
-        const includeCode = settings.includeCodeExamples ?? true;
+        const includeSetupSteps = settings.includeSetupSteps ?? true;
         const tone = settings.aiTone || undefined;
+        const internalLink = settings.internalLink || 'https://shabih.tech';
 
         // ── Determine Topic ───────────────────────────────
         let topic: string;
         let researchContext = '';
 
         if (manualTopic) {
-            // Manual topic passed in request body
             topic = manualTopic;
             console.log(`🤖 Manual topic: "${topic}"`);
         } else {
-            // Autonomous discovery
             console.log(`🔍 Autonomous topic discovery...`);
 
             const existingPosts = await PostsDB.getAll();
@@ -71,7 +74,6 @@ export async function POST(request: NextRequest) {
             const research = await discoverAndResearch(focusAreas as string[], existingSlugs);
             topic = research.topic.title;
 
-            // Build research context for the content generator
             const parts: string[] = [`Research context for: "${topic}"`];
             if (research.keyPoints.length) parts.push(`Key points: ${research.keyPoints.join('; ')}`);
             if (research.recentDevelopments.length) parts.push(`Recent developments: ${research.recentDevelopments.join('; ')}`);
@@ -80,39 +82,50 @@ export async function POST(request: NextRequest) {
             researchContext = parts.join('\n\n');
         }
 
-        // ── Generate Content ──────────────────────────────
-        const { content, model } = await generateBlogPost({
+        // ── Generate Content (Single-Pass JSON) ──────────
+        const { content: rawContent, metadata, model } = await generateBlogPost({
             topic,
             context: researchContext,
-            includeCode,
+            includeSetupSteps,
             minWords,
             maxWords,
             tone,
+            internalLink,
+            sponsorEnabled: settings.sponsorEnabled,
+            sponsorText: settings.sponsorText,
+            sponsorLink: settings.sponsorLink,
         });
 
-        // ── Quality Check ─────────────────────────────────
-        const qualityCheck = checkContentQuality(content, Math.floor(minWords * 0.75));
+        // Sanitize
+        const content = sanitizeContent(rawContent);
+
+        // ── Quality Check (100-point rubric) ──────────────
+        const qualityCheck = checkContentQuality(content);
 
         if (!qualityCheck.passed) {
             return NextResponse.json(
-                { error: 'Quality check failed', issues: qualityCheck.issues, score: qualityCheck.score },
+                { error: 'Quality check failed', issues: qualityCheck.issues, score: qualityCheck.score, breakdown: qualityCheck.breakdown },
                 { status: 422 }
             );
         }
 
-        // ── Metadata ──────────────────────────────────────
-        const metadata = await generatePostMetadata(content, topic);
-        if (!metadata) {
-            return NextResponse.json({ error: 'Failed to generate metadata' }, { status: 500 });
+        // ── Validate ─────────────────────────────────────
+        const validation = validatePost(content, { title: metadata.seo_title, metaDescription: metadata.meta_description });
+        if (!validation.passed) {
+            return NextResponse.json(
+                { error: 'Validation failed', issues: validation.issues },
+                { status: 422 }
+            );
         }
 
-        const baseSlug = await generateSlug(metadata.title);
-        let slug = baseSlug;
-        const existing = await PostsDB.getBySlug(slug);
-        if (existing) slug = `${baseSlug}-${Date.now()}`;
+        // ── Use metadata from single-pass response ───────
+        const slug = metadata.slug || await generateSlug(metadata.seo_title);
+        let finalSlug = slug;
+        const existing = await PostsDB.getBySlug(finalSlug);
+        if (existing) finalSlug = `${slug}-${Date.now()}`;
 
         // ── Derive tags & category ────────────────────────
-        const keywords: string[] = metadata.keywords || [];
+        const keywords: string[] = metadata.tags || [];
         const resolvedTags = new Set<string>();
         keywords.forEach(kw => {
             for (const [key, tags] of Object.entries(tagMap)) {
@@ -133,19 +146,19 @@ export async function POST(request: NextRequest) {
 
         // ── Save ──────────────────────────────────────────
         const stats = readingTime(content);
-        const ogImageUrl = `${site.url}/api/og?title=${encodeURIComponent(metadata.title)}&tags=${encodeURIComponent([...resolvedTags].slice(0, 3).join(','))}`;
+        const ogImageUrl = `${site.url}/api/og?title=${encodeURIComponent(metadata.seo_title)}&tags=${encodeURIComponent([...resolvedTags].slice(0, 3).join(','))}`;
 
         const postData = {
-            slug,
-            title: metadata.title,
+            slug: finalSlug,
+            title: metadata.seo_title,
             content,
-            excerpt: metadata.excerpt || '',
+            excerpt: metadata.meta_description || '',
             coverImage: ogImageUrl,
             author: author.name,
             publishedAt: null,
             scheduledFor: new Date(Date.now() + ai.schedulingDelayMs),
             status: 'draft',
-            metaDescription: metadata.metaDescription,
+            metaDescription: metadata.meta_description,
             metaKeywords: keywords,
             ogImage: ogImageUrl,
             tags: [...resolvedTags].slice(0, 5),
@@ -164,9 +177,10 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({
             success: true,
             postId,
-            slug,
-            title: metadata.title,
+            slug: finalSlug,
+            title: metadata.seo_title,
             qualityScore: qualityCheck.score,
+            autoPublish: qualityCheck.autoPublish,
             scheduledFor: postData.scheduledFor,
         });
     } catch (error) {

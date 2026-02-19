@@ -13,7 +13,7 @@
  */
 
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import { ai } from '@/lib/config/site';
+import { ai, EVERGREEN_FALLBACK_TOPICS } from '@/lib/config/site';
 
 if (!process.env.GEMINI_API_KEY) {
     throw new Error('GEMINI_API_KEY is not set');
@@ -89,32 +89,36 @@ export async function discoverTrendingTopics(
         ? `\n\nAVOID these topics (already published): ${existingSlugs.slice(0, 10).join(', ')}`
         : '';
 
-    const prompt = `Search the web for PRACTICAL topics developers are talking about this week in: ${focusAreas.join(', ')}.
+    const prompt = `Search the web for newly launched AI tools, AI productivity workflows trending this week,
+AI tools for business owners, AI tools for freelancers, Claude AI new features,
+ChatGPT tips, Gemini updates, AI tools for content creators, AI automation for agencies.
 
-I need topics that answer "How do I actually use this?" — NOT trend summaries.
+Focus areas to consider: ${focusAreas.join(', ')}
+
+I need topics for a 500-700 word practical guide aimed at NON-DEVELOPERS (freelancers, business owners, agency operators, students, creators).
 
 Look for:
-- New tools, libraries, or CLI utilities developers can install and try TODAY
-- Practical workflows: how devs use AI to write emails, summarize meetings, debug code, etc.
-- Step-by-step setup guides for newly released frameworks or features
-- Real "I tried X and here's what happened" developer experiences
-- Productivity hacks, dev environment setups, or automation scripts gaining traction
-- Specific techniques with before/after code examples
+- Newly launched or updated AI tools (last 30 days preferred)
+- AI workflows trending on Reddit, Twitter/X, Product Hunt
+- "Tool A vs Tool B" comparisons with high search volume
+- Use-case driven topics: "AI for lawyers", "AI for real estate agents", "AI for video editors"
+- Practical how-to angles on popular tools (ChatGPT, Claude, Notion AI, Perplexity, etc.)
 
 AVOID:
-- Generic trend roundups ("Top 10 AI trends in 2026")
+- Developer-focused or coding topics
+- Generic trend roundups ("Top 10 AI trends")
 - News-only topics with no actionable angle
-- Broad overviews without a specific how-to
+- Topics that require technical knowledge
 
 ${avoidList}
 
 Return EXACTLY ${count} topics as a JSON array. Each topic must have:
-- "title": A specific how-to or practical blog post title (e.g. "How to Use Cursor AI to Refactor a Legacy Codebase" NOT "AI Code Editors Are Changing Everything")
-- "angle": The practical angle — what will the reader be able to DO after reading?
+- "title": A specific practical blog post title under 55 characters that includes the tool name (e.g. "Otter.ai: Never Take Meeting Notes Again" NOT "AI Meeting Tools Overview")
+- "angle": What will the reader be able to DO after reading? (1 sentence)
 - "whyTrending": Why this is trending RIGHT NOW (1 sentence)
 - "searchQuery": A Google search query to research this topic deeper
 
-IMPORTANT: Topics must be CURRENT (this week/month) and ACTIONABLE.
+IMPORTANT: Topics must be CURRENT and ACTIONABLE for non-technical people.
 Return ONLY the JSON array, no markdown fences.`;
 
     try {
@@ -146,12 +150,13 @@ Return ONLY the JSON array, no markdown fences.`;
         return topics.slice(0, count);
     } catch (error) {
         console.error('❌ Topic discovery failed:', error);
-        // Fallback: return a generic prompt for Gemini to pick a topic without search
+        // Fallback: pick a random evergreen topic instead of generating a generic title
+        const picked = EVERGREEN_FALLBACK_TOPICS[Math.floor(Math.random() * EVERGREEN_FALLBACK_TOPICS.length)];
         return [{
-            title: `Latest Trends in ${focusAreas[0] || 'Web Development'}`,
-            angle: 'Overview of the most important recent developments',
-            whyTrending: 'Developers always want to stay current with the latest trends',
-            searchQuery: `${focusAreas[0] || 'web development'} trends ${new Date().getFullYear()}`,
+            title: picked,
+            angle: 'Practical step-by-step guide for non-technical users',
+            whyTrending: 'Evergreen topic with consistent search demand',
+            searchQuery: picked,
         }];
     }
 }
@@ -164,25 +169,27 @@ Return ONLY the JSON array, no markdown fences.`;
 export async function researchTopic(topic: DiscoveredTopic): Promise<TopicResearch> {
     console.log(`📚 Researching: "${topic.title}"...`);
 
-    const prompt = `Research this topic for a PRACTICAL how-to blog post: "${topic.title}"
+    const prompt = `Research this topic for a PRACTICAL guide aimed at non-technical people: "${topic.title}"
 Search query: "${topic.searchQuery}"
 Angle: "${topic.angle}"
 
-Search the web and find ACTIONABLE information. Focus on:
-- Exact setup steps, install commands, config files
-- Real code examples or CLI commands developers actually use
-- Specific version numbers, benchmarks, or performance results
-- Common gotchas, mistakes, and how to fix them
-- Before/after comparisons showing concrete improvement
+Search the web and find ACTIONABLE information for freelancers, business owners, and everyday users. Focus on:
+- What the tool does in plain English
+- Exact step-by-step setup (sign up, configure, start using)
+- Pricing: free tier, paid plans, and what you get
+- Real user experiences and reviews
+- Who benefits most: personal use, business, or agency
+- Honest limitations — what it can't do or what's annoying
+- How it compares to alternatives
 
 Return a JSON object with:
-- "keyPoints": Array of 5-8 specific, actionable technical points (not opinions — facts and steps)
-- "recentDevelopments": Array of 3-5 specific releases, updates, or changes (with version numbers and dates)
-- "uniqueAngles": Array of 3-4 practical angles most articles miss (e.g. "most guides skip the Docker setup" or "the real bottleneck is X not Y")
-- "sources": Array of article titles or URLs with useful code examples
-- "researchContext": A 200-300 word summary focused on WHAT THE READER CAN DO. Include install commands, config snippets, real numbers. This will be used as context to write a tutorial-style post.
+- "keyPoints": Array of 5-8 specific, actionable points a non-technical person can follow
+- "recentDevelopments": Array of 3-5 recent updates, new features, or pricing changes (with dates if available)
+- "uniqueAngles": Array of 3-4 practical angles most reviews miss (e.g. "most guides skip the mobile app" or "the free tier is actually enough for solopreneurs")
+- "sources": Array of article titles or URLs with useful information
+- "researchContext": A 200-300 word summary focused on WHAT THE READER CAN DO. Include setup steps, pricing, real user opinions. This will be used to write a practical guide.
 
-Be specific and factual. Include real version numbers, real commands, real tool names.
+Be specific and factual. Include real pricing, real features, real limitations.
 Return ONLY valid JSON, no markdown fences.`;
 
     try {

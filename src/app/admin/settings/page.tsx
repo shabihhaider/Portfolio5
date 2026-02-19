@@ -10,9 +10,16 @@ interface Settings {
     postingSchedule: string;
     contentTopics: string[];
     aiTone: string;
-    includeCodeExamples: boolean;
+    includeSetupSteps: boolean;
     minWordCount: number;
     maxWordCount: number;
+    targetAudience: string;
+    ctaLink: string;
+    ctaText: string;
+    sponsorEnabled: boolean;
+    sponsorText: string;
+    sponsorLink: string;
+    internalLink: string;
 }
 
 export default function SettingsPage() {
@@ -87,7 +94,7 @@ export default function SettingsPage() {
                         <div className="flex items-center justify-between p-4 bg-black/20 rounded-lg">
                             <div>
                                 <div className="font-bold text-white">Auto-Publish</div>
-                                <div className="text-sm text-gray-400">Automatically publish generated posts</div>
+                                <div className="text-sm text-gray-400">Automatically publish posts scoring ≥80/100</div>
                             </div>
                             <label className="relative inline-flex items-center cursor-pointer">
                                 <input
@@ -112,6 +119,104 @@ export default function SettingsPage() {
                                 <option value="biweekly">Bi-weekly</option>
                             </select>
                         </div>
+                    </div>
+                </section>
+
+                {/* Audience & CTA */}
+                <section className="bg-white/5 border border-white/10 rounded-xl p-6">
+                    <h2 className="text-xl font-bold text-white mb-4">🎯 Audience & CTA</h2>
+                    <div className="space-y-6">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-400 mb-2">Target Audience</label>
+                            <select
+                                value={settings.targetAudience}
+                                onChange={e => setSettings({ ...settings, targetAudience: e.target.value })}
+                                className="w-full bg-black/50 border border-white/10 rounded-lg px-4 py-2 text-white focus:border-[rgb(var(--brand))] focus:outline-none"
+                            >
+                                <option value="personal">Personal (students, creators)</option>
+                                <option value="business">Business (owners, operators)</option>
+                                <option value="agency">Agency (teams, freelancers)</option>
+                                <option value="mixed">Mixed (all audiences)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-400 mb-2">Internal Link (included in every post)</label>
+                            <input
+                                type="text"
+                                value={settings.internalLink}
+                                onChange={e => setSettings({ ...settings, internalLink: e.target.value })}
+                                placeholder="https://shabih.tech"
+                                className="w-full bg-black/50 border border-white/10 rounded-lg px-4 py-2 text-white focus:border-[rgb(var(--brand))] focus:outline-none"
+                            />
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-400 mb-2">CTA Link</label>
+                                <input
+                                    type="text"
+                                    value={settings.ctaLink}
+                                    onChange={e => setSettings({ ...settings, ctaLink: e.target.value })}
+                                    placeholder="https://shabih.tech"
+                                    className="w-full bg-black/50 border border-white/10 rounded-lg px-4 py-2 text-white focus:border-[rgb(var(--brand))] focus:outline-none"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-400 mb-2">CTA Text</label>
+                                <input
+                                    type="text"
+                                    value={settings.ctaText}
+                                    onChange={e => setSettings({ ...settings, ctaText: e.target.value })}
+                                    placeholder="e.g. Try my AI scheduling app"
+                                    className="w-full bg-black/50 border border-white/10 rounded-lg px-4 py-2 text-white focus:border-[rgb(var(--brand))] focus:outline-none"
+                                />
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                {/* Sponsor Slot */}
+                <section className="bg-white/5 border border-white/10 rounded-xl p-6">
+                    <h2 className="text-xl font-bold text-white mb-4">💰 Sponsor Slot</h2>
+                    <div className="space-y-6">
+                        <div className="flex items-center justify-between p-4 bg-black/20 rounded-lg">
+                            <div>
+                                <div className="font-bold text-white">Enable Sponsor</div>
+                                <div className="text-sm text-gray-400">Insert sponsored mention after &quot;How to use it&quot; section</div>
+                            </div>
+                            <label className="relative inline-flex items-center cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    checked={settings.sponsorEnabled}
+                                    onChange={e => setSettings({ ...settings, sponsorEnabled: e.target.checked })}
+                                    className="sr-only peer"
+                                />
+                                <div className="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[rgb(var(--brand))]"></div>
+                            </label>
+                        </div>
+                        {settings.sponsorEnabled && (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-400 mb-2">Sponsor Text</label>
+                                    <input
+                                        type="text"
+                                        value={settings.sponsorText}
+                                        onChange={e => setSettings({ ...settings, sponsorText: e.target.value })}
+                                        placeholder="Check out SponsorApp — the best tool for..."
+                                        className="w-full bg-black/50 border border-white/10 rounded-lg px-4 py-2 text-white focus:border-[rgb(var(--brand))] focus:outline-none"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-400 mb-2">Sponsor Link</label>
+                                    <input
+                                        type="text"
+                                        value={settings.sponsorLink}
+                                        onChange={e => setSettings({ ...settings, sponsorLink: e.target.value })}
+                                        placeholder="https://sponsor.com"
+                                        className="w-full bg-black/50 border border-white/10 rounded-lg px-4 py-2 text-white focus:border-[rgb(var(--brand))] focus:outline-none"
+                                    />
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </section>
 
@@ -154,17 +259,17 @@ export default function SettingsPage() {
                         <div className="flex items-center gap-2">
                             <input
                                 type="checkbox"
-                                checked={settings.includeCodeExamples}
-                                onChange={e => setSettings({ ...settings, includeCodeExamples: e.target.checked })}
-                                id="code_examples"
+                                checked={settings.includeSetupSteps}
+                                onChange={e => setSettings({ ...settings, includeSetupSteps: e.target.checked })}
+                                id="setup_steps"
                                 className="rounded bg-black/50 border-white/10 text-[rgb(var(--brand))] focus:ring-[rgb(var(--brand))]"
                             />
-                            <label htmlFor="code_examples" className="text-white">Include Code Examples when relevant</label>
+                            <label htmlFor="setup_steps" className="text-white">Include Step-by-Step Setup in posts</label>
                         </div>
 
                         <div>
                             <label className="block text-sm font-medium text-gray-400 mb-1">Focus Areas</label>
-                            <p className="text-xs text-gray-600 mb-3">Broad themes that guide AI topic discovery. The AI searches the web for trending topics within these areas — you don&apos;t need to specify exact post titles.</p>
+                            <p className="text-xs text-gray-600 mb-3">Broad themes that guide AI topic discovery. The AI searches the web for trending AI tools and workflows within these areas.</p>
                             <div className="flex gap-2 mb-2 flex-wrap">
                                 {settings.contentTopics?.map(topic => (
                                     <span key={topic} className="px-3 py-1 bg-[rgb(var(--brand))]/10 text-[rgb(var(--brand))] rounded-full text-sm flex items-center gap-2">
@@ -178,7 +283,7 @@ export default function SettingsPage() {
                                     type="text"
                                     value={topicInput}
                                     onChange={e => setTopicInput(e.target.value)}
-                                    placeholder="e.g. AI/ML, Web Performance, DevOps..."
+                                    placeholder="e.g. AI Tools, Productivity, ChatGPT Tips..."
                                     className="flex-1 bg-black/50 border border-white/10 rounded-lg px-4 py-2 text-white focus:border-[rgb(var(--brand))] focus:outline-none"
                                     onKeyDown={e => e.key === 'Enter' && addTopic()}
                                 />

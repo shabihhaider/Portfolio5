@@ -1,5 +1,5 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import { ai, systemPrompt } from '@/lib/config/site';
+import { ai, systemPrompt, defaultAppPromos, type AppPromo } from '@/lib/config/site';
 
 if (!process.env.GEMINI_API_KEY) {
     throw new Error('GEMINI_API_KEY is not set');
@@ -10,11 +10,24 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 export interface GeneratePostOptions {
     topic: string;
     tone?: string;
-    includeCode?: boolean;
+    includeSetupSteps?: boolean;
     minWords?: number;
     maxWords?: number;
     tags?: string[];
     context?: string;
+    internalLink?: string;
+    appPromos?: AppPromo[];
+    sponsorEnabled?: boolean;
+    sponsorText?: string;
+    sponsorLink?: string;
+}
+
+export interface SinglePassResult {
+    seo_title: string;
+    meta_description: string;
+    slug: string;
+    tags: string[];
+    post_body: string;
 }
 
 const SYSTEM_PROMPT = systemPrompt;
@@ -77,124 +90,161 @@ async function callGeminiWithRetry(
     throw new Error(`Gemini API failed across all models (${MODELS.join(', ')}): ${lastError?.message}`);
 }
 
-export async function generateBlogPost(options: GeneratePostOptions) {
+/**
+ * Single-pass generation: produces metadata + body in one JSON call.
+ * This replaces the old generateBlogPost() + generatePostMetadata() two-call approach.
+ */
+export async function generateBlogPost(options: GeneratePostOptions): Promise<{
+    content: string;
+    metadata: SinglePassResult;
+    model: string;
+}> {
     const {
         topic,
         tone = ai.defaults.tone,
-        includeCode = true,
+        includeSetupSteps = true,
         minWords = ai.defaults.minWords,
         maxWords = ai.defaults.maxWords,
         tags = [],
         context = '',
+        internalLink = 'https://shabih.tech',
+        appPromos = defaultAppPromos,
+        sponsorEnabled = false,
+        sponsorText = '',
+        sponsorLink = '',
     } = options;
 
-    const userPrompt = `Write a practical, actionable blog post about: ${topic}
+    // Find relevant app promo if any
+    const topicLower = topic.toLowerCase();
+    const relevantPromo = appPromos.find(p =>
+        p.relevantTopics.some(t => topicLower.includes(t.toLowerCase()))
+    );
+
+    const promoInstruction = relevantPromo
+        ? `\n\nAPP MENTION (include naturally, NOT as an ad):\nMention "${relevantPromo.name}" (${relevantPromo.url}) — ${relevantPromo.oneLiner}. Work it in like a friend's recommendation, e.g. "If you're already using AI for [context], check out ${relevantPromo.name} — I built it for [audience]."`
+        : '';
+
+    const sponsorInstruction = sponsorEnabled && sponsorText
+        ? `\n\nSPONSOR (insert after section 3 — "How to use it"):\n> **Sponsored:** ${sponsorText}${sponsorLink ? ` [Learn more](${sponsorLink})` : ''}`
+        : '';
+
+    const userPrompt = `Write a practical AI tool guide about: ${topic}
 ${context ? `\nResearch context:\n${context}` : ''}
 
-Requirements:
-- Length: ${minWords}-${maxWords} words
-- Code examples: ${includeCode ? 'Yes — include copy-pasteable snippets with language tags' : 'No'}
-- Tags: ${tags.join(', ') || 'relevant to the topic'}
-- Format: Standard Markdown ONLY (no JSX, no import/export)
+REQUIREMENTS:
+- Length: ${minWords}-${maxWords} words. Do NOT exceed ${maxWords}. Every word must earn its place.
+- Setup steps: ${includeSetupSteps ? 'Yes — 4-6 numbered steps in plain English, no code' : 'Minimal'}
 - Tone: ${tone}
+- Include 1 internal link to ${internalLink} (natural anchor text, not "click here")
+- Include 1 external link to the tool's official website
+- Tags for context: ${tags.join(', ') || 'relevant to the topic'}
+${promoInstruction}${sponsorInstruction}
 
-Structure:
-1. Hook — open with a specific problem or surprising result (NOT "In today's world...")
-2. Why it matters — 2-3 sentences of context
-3. Step-by-step solution — the core tutorial with real code
-4. Gotchas & real-world notes — things that tripped you up or surprised you
-5. Takeaway — ONE clear action item the reader should do next
+STRUCTURE (strict — do not deviate):
+1. Hook (~30 words max) — name the exact problem this solves
+2. What is [Tool]? (~50 words) — what it does, who built it, free/paid
+3. How to use it (4–6 numbered steps, plain English, no code)
+4. Who benefits most (3 bullet points: Personal / Business / Agency)
+5. The honest catch (~30 words — one real limitation)
+6. Bottom line (~20 words + internal link)
 
-Rules:
-- Every section must teach something the reader can USE immediately
-- Replace filler phrases with concrete examples
-- Code blocks must have language tags (\`\`\`typescript, \`\`\`bash, etc.)
-- Do NOT include any UI text like "Copy", navigation elements, or HTML comments
-- Do NOT use <Callout>, <Note>, <Tip> or any JSX component tags
-- End with a clear call-to-action: what should the reader build/try/install next?
+FORMATTING:
+- Standard Markdown only: # headings, **bold**, *italic*, lists, > blockquotes, [links](url)
+- No code blocks, no JSX, no import/export, no UI elements
+- H2 headings phrased as questions people actually Google, when relevant
 
-Return ONLY the Markdown content. No preamble, no wrapper fences.`;
+RETURN FORMAT — Return ONLY a valid JSON object with these exact keys:
+{
+  "seo_title": "Tool Name: Outcome in Under 55 Chars",
+  "meta_description": "One compelling sentence under 155 chars, includes tool name, does NOT start with the title",
+  "slug": "lowercase-hyphen-slug-under-60-chars",
+  "tags": ["5 specific tags", "not generic"],
+  "post_body": "# Title\\n\\nFull post content in markdown..."
+}
+
+CRITICAL: Return ONLY the JSON object. No markdown fences, no explanation, no preamble.`;
 
     const result = await callGeminiWithRetry(userPrompt, SYSTEM_PROMPT, {
         temperature: ai.generation.temperature,
         maxOutputTokens: ai.generation.maxOutputTokens,
+        jsonMode: true,
     });
 
-    return {
-        content: result.text,
-        model: result.model,
-        tokensUsed: 0,
-    };
-}
-
-export async function generatePostMetadata(content: string, topic: string) {
-    const prompt = `Generate SEO metadata for a blog post about "${topic}".
-
-Return a JSON object with exactly these keys:
-- "title": catchy SEO title, max 60 characters
-- "metaDescription": meta description, max 155 characters  
-- "keywords": array of 5 relevant keywords as strings
-- "excerpt": short excerpt, max 150 characters
-
-Content starts with:
-${content.slice(0, 300)}`;
-
+    // Parse the single-pass JSON response
+    let parsed: SinglePassResult;
     try {
-        const result = await callGeminiWithRetry(prompt, 'Return ONLY valid JSON with double-quoted string keys: title, metaDescription, keywords, excerpt. No markdown fences, no explanation.', {
-            temperature: ai.metadata.temperature,
-            maxOutputTokens: ai.metadata.maxOutputTokens,
-            jsonMode: true,
-        });
-
-        // Aggressively clean LLM JSON output
         let cleaned = result.text
             .replace(/```json\s*/g, '')
             .replace(/```\s*/g, '')
             .trim();
 
-        // Extract JSON object if surrounded by extra text
         const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
-        if (jsonMatch) {
-            cleaned = jsonMatch[0];
-        }
+        if (jsonMatch) cleaned = jsonMatch[0];
 
-        // Fix common LLM issues
         cleaned = cleaned
-            .replace(/[\x00-\x1F\x7F]/g, ' ')  // control chars → space
-            .replace(/,\s*([}\]])/g, '$1');       // trailing commas
+            .replace(/[\x00-\x1F\x7F]/g, ' ')
+            .replace(/,\s*([}\]])/g, '$1');
 
-        const metadata = JSON.parse(cleaned);
+        parsed = JSON.parse(cleaned);
 
-        // Validate shape
-        if (typeof metadata.title !== 'string') throw new Error('Invalid title');
+        // Validate required fields
+        if (!parsed.post_body || typeof parsed.post_body !== 'string') {
+            throw new Error('Missing or invalid post_body in response');
+        }
+        if (!parsed.seo_title || typeof parsed.seo_title !== 'string') {
+            throw new Error('Missing or invalid seo_title in response');
+        }
+    } catch (parseError) {
+        console.error('❌ JSON parse failed, attempting plain text fallback...');
+        // If JSON parse fails, treat the entire response as markdown content
+        // and generate basic metadata from it
+        const text = result.text;
+        const titleLine = text.split('\n').find(l => l.startsWith('#'))?.replace(/^#+\s*/, '') || topic;
+        const plainText = text.replace(/[#*`\n\r]/g, ' ').replace(/\s+/g, ' ').trim();
 
-        return {
-            title: String(metadata.title || '').slice(0, 60),
-            metaDescription: String(metadata.metaDescription || '').slice(0, 155),
-            keywords: Array.isArray(metadata.keywords) ? metadata.keywords.map(String) : [],
-            excerpt: String(metadata.excerpt || '').slice(0, 150),
-        };
-    } catch (error) {
-        console.error('Metadata generation error:', error);
-
-        // Fallback: extract metadata from content directly
-        console.log('📝 Using fallback metadata extraction...');
-        const lines = content.split('\n').filter(l => l.trim());
-        const titleLine = lines.find(l => l.startsWith('#'))?.replace(/^#+\s*/, '') || topic;
-        const plainText = content.replace(/[#*`\n\r]/g, ' ').replace(/\s+/g, ' ').trim();
-
-        return {
-            title: titleLine.slice(0, 60),
-            metaDescription: plainText.slice(0, 155),
-            keywords: topic.split(/[\s,]+/).filter(w => w.length > 3).slice(0, 5),
-            excerpt: plainText.slice(0, 150),
+        parsed = {
+            seo_title: titleLine.slice(0, 55),
+            meta_description: plainText.slice(0, 155),
+            slug: titleLine.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60),
+            tags: topic.split(/[\s,]+/).filter(w => w.length > 3).slice(0, 5),
+            post_body: text,
         };
     }
+
+    // Enforce field constraints
+    parsed.seo_title = parsed.seo_title.slice(0, 55);
+    parsed.meta_description = (parsed.meta_description || '').slice(0, 155);
+    parsed.slug = (parsed.slug || '').slice(0, 60);
+    parsed.tags = Array.isArray(parsed.tags) ? parsed.tags.map(String).slice(0, 5) : [];
+
+    return {
+        content: parsed.post_body,
+        metadata: parsed,
+        model: result.model,
+    };
+}
+
+/**
+ * @deprecated Use generateBlogPost() which now returns metadata too (single-pass).
+ * Kept for backward compatibility — extracts metadata from content.
+ */
+export async function generatePostMetadata(content: string, topic: string) {
+    const lines = content.split('\n').filter(l => l.trim());
+    const titleLine = lines.find(l => l.startsWith('#'))?.replace(/^#+\s*/, '') || topic;
+    const plainText = content.replace(/[#*`\n\r]/g, ' ').replace(/\s+/g, ' ').trim();
+
+    return {
+        title: titleLine.slice(0, 55),
+        metaDescription: plainText.slice(0, 155),
+        keywords: topic.split(/[\s,]+/).filter(w => w.length > 3).slice(0, 5),
+        excerpt: plainText.slice(0, 150),
+    };
 }
 
 export async function generateSlug(title: string): Promise<string> {
     return title
         .toLowerCase()
         .replace(/[^a-z0-9]+/g, '-')
-        .replace(/^-+|-+$/g, '');
+        .replace(/^-+|-+$/g, '')
+        .slice(0, 60);
 }

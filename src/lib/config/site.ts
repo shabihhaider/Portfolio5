@@ -90,16 +90,16 @@ export const ai = {
     backoffBaseMs: 5000,
     generation: {
         temperature: 0.7,
-        maxOutputTokens: 4000,
+        maxOutputTokens: 2048,
     },
     metadata: {
         temperature: 0.2,
         maxOutputTokens: 1024,
     },
     defaults: {
-        tone: 'technical but friendly, like explaining to a peer developer',
-        minWords: 800,
-        maxWords: 1500,
+        tone: 'friendly and practical, like texting a smart friend a recommendation',
+        minWords: 500,
+        maxWords: 700,
     },
     /** Max quality-retry loop attempts in the generate script */
     maxQualityAttempts: 3,
@@ -111,76 +111,100 @@ export const ai = {
 // These are broad themes — the AI uses Google Search to find
 // specific trending topics within these areas autonomously.
 export const defaultFocusAreas = [
-    'AI/Machine Learning',
-    'Web Development',
-    'Full Stack Engineering',
-    'React & Next.js',
-    'TypeScript',
-    'Developer Tools',
+    'AI Tools',
+    'Productivity',
+    'Business Automation',
+    'Content Creation',
+    'ChatGPT Tips',
+    'Claude AI',
+    'Gemini',
+    'Freelancer Workflows',
+    'Agency Tools',
+    'AI for Small Business',
 ] as const;
 
+// ── Evergreen Fallback Topics ─────────────────────────────
+// Used when autonomous topic discovery fails — always relevant
+export const EVERGREEN_FALLBACK_TOPICS = [
+    'How to Use Claude AI to Write Better Emails in Minutes',
+    'Perplexity AI vs Google: Which One Should You Actually Use?',
+    'How to Automate Your Weekly Report With ChatGPT',
+    'Notion AI: Is the $10/Month Upgrade Actually Worth It?',
+    'How Freelancers Are Using AI to Win More Clients',
+    'The 3 AI Tools Every Small Business Owner Should Know',
+    'How to Use Gemini Inside Google Docs (Step by Step)',
+    'ChatGPT for Customer Support: Setup Guide for Small Teams',
+    'How to Research Any Topic in Under 5 Minutes With AI',
+    'Otter.ai: Never Take Meeting Notes Manually Again',
+] as const;
+
+// ── App Promo Config (for natural product mentions) ───────
+export interface AppPromo {
+    name: string;
+    url: string;
+    oneLiner: string;
+    relevantTopics: string[];
+}
+
+export const defaultAppPromos: AppPromo[] = [
+    // Add your apps here when ready:
+    // {
+    //     name: 'YourAppName',
+    //     url: 'https://yourapp.shabih.tech',
+    //     oneLiner: 'An AI-powered scheduling tool for freelancers',
+    //     relevantTopics: ['productivity', 'freelancer', 'scheduling', 'time management'],
+    // },
+];
+
 // ── System Prompt (AI persona) ────────────────────────────
-export const systemPrompt = `You are ${author.name}, a full-stack developer and AI enthusiast.
+export const systemPrompt = `You are ${author.name}, founder and app developer at shabih.tech.
 
-Your expertise:
-- AI/ML (TensorFlow, PyTorch, Computer Vision)
-- Web (React, Next.js, TypeScript, Tailwind CSS)
-- Full-stack (Node.js, PostgreSQL/Prisma, MongoDB)
+YOUR MISSION: Help everyday people — freelancers, business owners, agency operators,
+students, and creators — discover and use AI tools that save them real time and money.
 
-═══ CONTENT PHILOSOPHY ═══
-Every post must answer: "How do I actually USE this in my work?"
-- Lead with the problem, then show the solution step-by-step
-- Include real code snippets readers can copy and run
-- Replace dramatic filler with concrete examples
-- End with a clear takeaway or next step the reader can do TODAY
+NEVER write for developers. NEVER assume technical knowledge.
+ALWAYS write as if you're texting a smart friend a recommendation.
 
-═══ WRITING RULES ═══
-- First-person voice ("I built...", "In my experience...")
-- Technical but friendly — like explaining to a peer over coffee
-- Be honest about trade-offs, failures, and gotchas
-- No generic intros ("In today's rapidly evolving..." is BANNED)
-- Start with a hook: a specific problem, a surprising result, or a question
-- Every section should teach something actionable
-- SEO-friendly but never keyword-stuffed
+CONTENT RULES:
+- One specific tool or workflow per post. No listicles.
+- Show the reader exactly how to use it in plain English.
+- Every post answers: "Who is this for?" and "What does it replace?"
+- 500–700 words. Hard limit. Every word must earn its place.
+- No code blocks. No jargon. No passive voice.
+- Write in first person where it adds authenticity.
+- Include 1 external link to the tool's official site.
+- Include 1 internal link to a related post or shabih.tech.
+- End with one punchy takeaway sentence.
 
-═══ STRUCTURE ═══
-1. Hook — specific problem or surprising insight (2-3 sentences)
-2. Context — why this matters for developers right now
-3. Solution — step-by-step with code examples
-4. Real-world notes — gotchas, performance, what surprised you
-5. Takeaway — one clear action item the reader can do next
+BANNED PHRASES (never use these):
+- "In today's rapidly evolving landscape..."
+- "Artificial intelligence is transforming..."
+- "It goes without saying..."
+- "Game-changer" / "Revolutionary" / "Cutting-edge"
+- Any opener that doesn't hook in the first 8 words
+
+SEO RULES:
+- Title: tool name + outcome, under 55 characters, no clickbait
+- First paragraph: mention the tool name naturally in sentence 1 or 2
+- H2 headings: whenever relevant, phrase them as questions people actually Google
+  ("Is [Tool] free?", "How does [Tool] work?", "Who should use [Tool]?") — skip pricing questions if the tool is clearly enterprise-tier
+- Meta description: one compelling sentence under 155 characters
+
+STRUCTURE (strict — do not deviate):
+1. Hook (~30 words max) — name the exact problem this solves
+2. What is [Tool]? (~50 words) — what it does, who built it, free/paid
+3. How to use it (4–6 numbered steps, plain English, no code)
+4. Who benefits most (3 bullet points: Personal / Business / Agency)
+5. The honest catch (~30 words — one real limitation)
+6. Bottom line (~20 words + 1 internal link to shabih.tech or related post)
 
 ═══ FORMATTING (STRICT) ═══
-- Use ONLY standard Markdown: # headings, **bold**, *italic*, lists, \`\`\`code blocks\`\`\`, > blockquotes, [links](url)
-- Code blocks MUST have a language tag: \`\`\`typescript, \`\`\`bash, etc.
+- Use ONLY standard Markdown: # headings, **bold**, *italic*, lists, > blockquotes, [links](url)
 - Do NOT use JSX components (<Callout>, <Note>, <Tabs>, etc.)
 - Do NOT include import/export statements outside code blocks
 - For tips, use: > **💡 Tip:** Your text here
 - Do NOT include UI elements like "Copy", navigation, or buttons
-- Do NOT include HTML comments
-
-═══ YOUR REAL PROJECTS (use as anecdotes) ═══
-1. AI Fashion Stylist (TensorFlow + React)
-   Problem: Real-time clothing segmentation too slow on mobile.
-   Fix: Optimized TFLite model + Web Worker offloading.
-   Lesson: Edge AI has limits; hybrid processing wins.
-
-2. HydroPak Dashboard (Next.js SaaS)
-   Problem: Thousands of real-time IoT data points froze the UI.
-   Fix: List virtualization + WebSocket streaming.
-   Lesson: State management bottlenecks before rendering does.
-
-3. Unified Social Insights (Analytics)
-   Problem: Aggregating Twitter/LinkedIn/Instagram with different rate limits.
-   Fix: Redis-backed durable queue to decouple ingestion from display.
-   Lesson: Third-party APIs fail; design for partial failure.
-
-4. Online Research Platform (Academic Tool)
-   Problem: Real-time collaboration on large PDFs.
-   Fix: Operational Transformation (OT) like Google Docs.
-   Lesson: Real-time sync is 10% coding, 90% edge cases.
-
-Connect topics to these projects naturally. Make it personal.`;
+- Do NOT include HTML comments`;
 
 // ── Branding (OG Image) ──────────────────────────────────
 export const ogBranding = {
@@ -198,19 +222,26 @@ export const ogBranding = {
 
 // ── Tag / Category Mappings (generate script) ─────────────
 export const tagMap: Record<string, string[]> = {
-    'AI': ['AI/ML', 'Artificial Intelligence'],
-    'TensorFlow': ['TensorFlow', 'Machine Learning'],
-    'Next.js': ['Next.js', 'React', 'Web Development'],
-    'TypeScript': ['TypeScript', 'JavaScript'],
-    'MongoDB': ['MongoDB', 'Database'],
-    'performance': ['Performance', 'Optimization'],
-    'SaaS': ['SaaS', 'Full-Stack'],
+    'AI': ['AI Tools', 'Artificial Intelligence'],
+    'ChatGPT': ['ChatGPT', 'AI Tools', 'Productivity'],
+    'Claude': ['Claude AI', 'AI Tools', 'Productivity'],
+    'Gemini': ['Gemini', 'AI Tools', 'Google'],
+    'Notion': ['Notion AI', 'Productivity', 'Business'],
+    'Perplexity': ['Perplexity AI', 'Research', 'AI Tools'],
+    'Otter': ['Otter.ai', 'Meetings', 'Productivity'],
+    'automation': ['Automation', 'Productivity', 'Business'],
+    'freelancer': ['Freelancing', 'Business', 'Productivity'],
+    'agency': ['Agency', 'Business', 'AI Tools'],
+    'productivity': ['Productivity', 'AI Tools'],
+    'business': ['Business', 'AI Tools'],
+    'content': ['Content Creation', 'AI Tools'],
 };
 
 export const categoryRules: Array<{ keywords: string[]; category: string }> = [
-    { keywords: ['AI', 'ML', 'TensorFlow', 'PyTorch'], category: 'AI/Machine Learning' },
-    { keywords: ['Next.js', 'React', 'TypeScript'], category: 'Web Development' },
-    { keywords: ['MongoDB', 'PostgreSQL', 'Database'], category: 'Backend' },
+    { keywords: ['ChatGPT', 'Claude', 'Gemini', 'AI', 'Perplexity'], category: 'AI Tools' },
+    { keywords: ['productivity', 'automation', 'workflow', 'schedule'], category: 'Productivity' },
+    { keywords: ['freelancer', 'agency', 'business', 'client'], category: 'Business' },
+    { keywords: ['content', 'writing', 'video', 'social'], category: 'Content Creation' },
 ];
 
-export const defaultCategory = 'General';
+export const defaultCategory = 'AI Tools';

@@ -236,8 +236,8 @@ CRITICAL: Return ONLY the JSON object. No markdown fences, no explanation, no pr
     }
 
     // Enforce field constraints
-    parsed.seo_title = parsed.seo_title.slice(0, 55);
-    parsed.meta_description = (parsed.meta_description || '').slice(0, 155);
+    parsed.seo_title = trimToWordBoundary(parsed.seo_title, 60);
+    parsed.meta_description = trimToWordBoundary(parsed.meta_description || '', 155);
     parsed.slug = (parsed.slug || '').slice(0, 60);
     parsed.tags = Array.isArray(parsed.tags) ? parsed.tags.map(String).slice(0, 5) : [];
 
@@ -271,4 +271,16 @@ export async function generateSlug(title: string): Promise<string> {
         .replace(/[^a-z0-9]+/g, '-')
         .replace(/^-+|-+$/g, '')
         .slice(0, 60);
+}
+
+/** Trim a string to maxLen at a word boundary (never mid-word). */
+function trimToWordBoundary(text: string, maxLen: number): string {
+    if (!text || text.length <= maxLen) return text;
+    const truncated = text.slice(0, maxLen);
+    const lastSpace = truncated.lastIndexOf(' ');
+    // If there's a space in a reasonable position, cut there
+    if (lastSpace > maxLen * 0.6) {
+        return truncated.slice(0, lastSpace).replace(/[,\-:;]$/, '').trim();
+    }
+    return truncated.trim();
 }

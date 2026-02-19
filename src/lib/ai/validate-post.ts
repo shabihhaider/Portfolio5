@@ -84,11 +84,11 @@ export function validatePost(
             severity: 'warning',
         });
     }
-    // Title ends mid-word or with ellipsis (truncated)
-    if (metadata.title && /(\.\.\.|…|[a-z])$/.test(metadata.title.trim())) {
+    // Title ends with ellipsis or obvious truncation (NOT lowercase letters — those are normal)
+    if (metadata.title && /(\.\.\.|…|\.\s*$)/.test(metadata.title.trim())) {
         issues.push({
             rule: 'title-truncated',
-            message: 'Title appears truncated (ends with "..." or mid-word)',
+            message: 'Title appears truncated (ends with "..." or ellipsis)',
             severity: 'error',
         });
     }

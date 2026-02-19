@@ -1,5 +1,6 @@
 
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import { PostsDB } from '@/lib/db/posts';
 import { isAuthenticated } from '@/lib/auth/admin';
 
@@ -32,6 +33,10 @@ export async function POST(request: NextRequest) {
         if (!success) {
             return NextResponse.json({ error: 'Post not found' }, { status: 404 });
         }
+
+        // Purge cached blog pages so the new post appears immediately
+        revalidatePath('/blog');
+        revalidatePath(`/blog/${slug}`);
 
         return NextResponse.json({ success: true });
     } catch (error) {

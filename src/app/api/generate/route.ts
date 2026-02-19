@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import { generateBlogPost, generateSlug } from '@/lib/ai/gemini';
 import { checkContentQuality } from '@/lib/ai/quality-check';
 import { sanitizeContent } from '@/lib/ai/sanitize';
@@ -200,6 +201,9 @@ export async function POST(request: NextRequest) {
         };
 
         const postId = await PostsDB.create(postData);
+
+        // Purge blog page cache so new drafts show up for admin
+        revalidatePath('/blog');
 
         return NextResponse.json({
             success: true,

@@ -1,5 +1,6 @@
 
 import { NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import { PostsDB } from '@/lib/db/posts';
 
 export async function GET(request: Request) {
@@ -17,9 +18,14 @@ export async function GET(request: Request) {
             );
         }
 
-        await PostsDB.publishScheduledPosts();
+        const count = await PostsDB.publishScheduledPosts();
 
-        return NextResponse.json({ success: true, message: 'Scheduled posts published' });
+        // Purge blog page cache if any posts were published
+        if (count > 0) {
+            revalidatePath('/blog');
+        }
+
+        return NextResponse.json({ success: true, published: count, message: 'Scheduled posts published' });
     } catch (error) {
         console.error('Cron job error:', error);
         return NextResponse.json({ error: 'Failed to publish scheduled posts' }, { status: 500 });

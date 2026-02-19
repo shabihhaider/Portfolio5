@@ -24,6 +24,13 @@ export function checkContentQuality(content: string, minWords: number = 800): Qu
         score -= 0.5;
     }
 
+    // Code block language tags
+    const fencesWithoutLang = (content.match(/^```\s*$/gm) || []).length;
+    if (fencesWithoutLang > 0) {
+        suggestions.push(`${fencesWithoutLang} code fence(s) missing language tags`);
+        score -= 0.5;
+    }
+
     // Headers check
     const headers = (content.match(/^#{2,3}\s/gm) || []).length;
     if (headers < 3) {
@@ -40,7 +47,6 @@ export function checkContentQuality(content: string, minWords: number = 800): Qu
 
     // Duplicate content check (basic)
     const sentences = content.split(/[.!?]+/);
-    // Filtering out short segments and empty strings
     const validSentences = sentences.filter(s => s.trim().length > 10);
     const uniqueSentences = new Set(validSentences.map(s => s.trim().toLowerCase()));
 
@@ -52,18 +58,60 @@ export function checkContentQuality(content: string, minWords: number = 800): Qu
         }
     }
 
-    // Introduction check (checking for typical AI patterns)
-    const intro = content.slice(0, 200).toLowerCase();
-    if (intro.includes('in today\'s digital world') || intro.includes('in the rapidly evolving')) {
-        issues.push('Introduction sounds generic/AI-generated');
+    // Generic intro check
+    const intro = content.slice(0, 300).toLowerCase();
+    const fillerPhrases = [
+        'in today\'s digital world',
+        'in the rapidly evolving',
+        'in today\'s rapidly',
+        'in the ever-changing',
+        'without further ado',
+        'buckle up',
+        'fasten your seatbelt',
+        'are you ready?',
+    ];
+    for (const phrase of fillerPhrases) {
+        if (intro.includes(phrase)) {
+            issues.push(`Generic/AI filler phrase in intro: "${phrase}"`);
+            score -= 1;
+            break; // only penalize once
+        }
+    }
+
+    // UI artifact check
+    const uiArtifacts = ['Copy to clipboard', 'Copied!', 'Loading...', 'Page not found', 'Accept cookies'];
+    for (const artifact of uiArtifacts) {
+        if (content.includes(artifact)) {
+            issues.push(`UI artifact in body: "${artifact}"`);
+            score -= 2;
+        }
+    }
+
+    // Actionable content check
+    const lower = content.toLowerCase();
+    const hasActionable =
+        lower.includes('step 1') ||
+        lower.includes('here\'s how') ||
+        lower.includes('how to') ||
+        lower.includes('try this') ||
+        lower.includes('you can') ||
+        lower.includes('run this') ||
+        lower.includes('install') ||
+        lower.includes('npm ') ||
+        lower.includes('npx ') ||
+        (lower.includes('```') && (lower.includes('const ') || lower.includes('function ')));
+    if (!hasActionable) {
+        suggestions.push('Post lacks actionable steps or usable code');
         score -= 1;
     }
 
     // CTA check
-    const hasCTA = content.toLowerCase().includes('try') ||
-        content.toLowerCase().includes('build') ||
-        content.toLowerCase().includes('share') ||
-        content.toLowerCase().includes('subscribe');
+    const hasCTA = lower.includes('try') ||
+        lower.includes('build') ||
+        lower.includes('share') ||
+        lower.includes('get started') ||
+        lower.includes('next step') ||
+        lower.includes('subscribe');
     if (!hasCTA) {
         suggestions.push('Add a call-to-action to engage readers');
         score -= 0.5;

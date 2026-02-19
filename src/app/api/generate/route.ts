@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { generateBlogPost, generatePostMetadata, generateSlug } from '@/lib/ai/gemini';
 import { checkContentQuality } from '@/lib/ai/quality-check';
+import { sanitizeContent } from '@/lib/ai/sanitize';
+import { validatePost } from '@/lib/ai/validate-post';
 import { discoverAndResearch } from '@/lib/ai/topic-discovery';
 import { PostsDB } from '@/lib/db/posts';
 import { author, site, ai, defaultFocusAreas, tagMap, categoryRules, defaultCategory } from '@/lib/config/site';

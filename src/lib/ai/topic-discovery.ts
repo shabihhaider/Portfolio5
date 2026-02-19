@@ -89,24 +89,32 @@ export async function discoverTrendingTopics(
         ? `\n\nAVOID these topics (already published): ${existingSlugs.slice(0, 10).join(', ')}`
         : '';
 
-    const prompt = `Search the web for the most trending and discussed topics this week in software development, specifically around: ${focusAreas.join(', ')}.
+    const prompt = `Search the web for PRACTICAL topics developers are talking about this week in: ${focusAreas.join(', ')}.
+
+I need topics that answer "How do I actually use this?" — NOT trend summaries.
 
 Look for:
-- New framework releases, updates, or major announcements
-- Emerging AI tools, models, or techniques developers are talking about
-- Performance breakthroughs or new best practices
-- Controversial or highly-discussed developer topics
-- New libraries, tools, or workflows gaining traction
+- New tools, libraries, or CLI utilities developers can install and try TODAY
+- Practical workflows: how devs use AI to write emails, summarize meetings, debug code, etc.
+- Step-by-step setup guides for newly released frameworks or features
+- Real "I tried X and here's what happened" developer experiences
+- Productivity hacks, dev environment setups, or automation scripts gaining traction
+- Specific techniques with before/after code examples
+
+AVOID:
+- Generic trend roundups ("Top 10 AI trends in 2026")
+- News-only topics with no actionable angle
+- Broad overviews without a specific how-to
 
 ${avoidList}
 
 Return EXACTLY ${count} topics as a JSON array. Each topic must have:
-- "title": A specific, compelling blog post title (not generic)
-- "angle": A unique perspective or angle to cover this topic
+- "title": A specific how-to or practical blog post title (e.g. "How to Use Cursor AI to Refactor a Legacy Codebase" NOT "AI Code Editors Are Changing Everything")
+- "angle": The practical angle — what will the reader be able to DO after reading?
 - "whyTrending": Why this is trending RIGHT NOW (1 sentence)
 - "searchQuery": A Google search query to research this topic deeper
 
-IMPORTANT: Topics must be CURRENT (this week/month), not evergreen rehashes.
+IMPORTANT: Topics must be CURRENT (this week/month) and ACTIONABLE.
 Return ONLY the JSON array, no markdown fences.`;
 
     try {
@@ -156,20 +164,25 @@ Return ONLY the JSON array, no markdown fences.`;
 export async function researchTopic(topic: DiscoveredTopic): Promise<TopicResearch> {
     console.log(`📚 Researching: "${topic.title}"...`);
 
-    const prompt = `Research this topic thoroughly: "${topic.title}"
-Search query to use: "${topic.searchQuery}"
-Angle to explore: "${topic.angle}"
+    const prompt = `Research this topic for a PRACTICAL how-to blog post: "${topic.title}"
+Search query: "${topic.searchQuery}"
+Angle: "${topic.angle}"
 
-Search the web and find the LATEST information about this topic. Read recent articles, blog posts, documentation, and discussions.
+Search the web and find ACTIONABLE information. Focus on:
+- Exact setup steps, install commands, config files
+- Real code examples or CLI commands developers actually use
+- Specific version numbers, benchmarks, or performance results
+- Common gotchas, mistakes, and how to fix them
+- Before/after comparisons showing concrete improvement
 
 Return a JSON object with:
-- "keyPoints": Array of 5-8 key technical points discovered from research
-- "recentDevelopments": Array of 3-5 specific recent events, releases, or changes (with dates if possible)
-- "uniqueAngles": Array of 3-4 unique perspectives or takes most articles are NOT covering
-- "sources": Array of article titles or URLs you found useful
-- "researchContext": A 200-300 word summary of the research findings that a blog writer can use as context. Include specific numbers, versions, benchmarks, or facts found.
+- "keyPoints": Array of 5-8 specific, actionable technical points (not opinions — facts and steps)
+- "recentDevelopments": Array of 3-5 specific releases, updates, or changes (with version numbers and dates)
+- "uniqueAngles": Array of 3-4 practical angles most articles miss (e.g. "most guides skip the Docker setup" or "the real bottleneck is X not Y")
+- "sources": Array of article titles or URLs with useful code examples
+- "researchContext": A 200-300 word summary focused on WHAT THE READER CAN DO. Include install commands, config snippets, real numbers. This will be used as context to write a tutorial-style post.
 
-Be specific and factual. Include real version numbers, real benchmark results, real tool names.
+Be specific and factual. Include real version numbers, real commands, real tool names.
 Return ONLY valid JSON, no markdown fences.`;
 
     try {

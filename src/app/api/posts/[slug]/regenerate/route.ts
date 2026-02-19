@@ -3,6 +3,8 @@ import { PostsDB } from '@/lib/db/posts';
 import { isAuthenticated } from '@/lib/auth/admin';
 import { generateBlogPost, generatePostMetadata, generateSlug } from '@/lib/ai/gemini';
 import { checkContentQuality } from '@/lib/ai/quality-check';
+import { sanitizeContent } from '@/lib/ai/sanitize';
+import { validatePost } from '@/lib/ai/validate-post';
 import { author, site, ai, tagMap, categoryRules, defaultCategory } from '@/lib/config/site';
 import readingTime from 'reading-time';
 
@@ -32,7 +34,7 @@ export async function POST(request: NextRequest, { params }: Props) {
             : oldPost.title;
 
         // Generate new content
-        const { content, model } = await generateBlogPost({
+        const { content: rawContent, model } = await generateBlogPost({
             topic,
             includeCode: true,
             minWords: 800,
@@ -40,11 +42,22 @@ export async function POST(request: NextRequest, { params }: Props) {
             context: 'This is a regeneration. The previous version was rejected. Write a substantially different version with a fresh angle.',
         });
 
+        const content = sanitizeContent(rawContent);
         const qualityCheck = checkContentQuality(content, 600);
 
         const metadata = await generatePostMetadata(content, topic);
         if (!metadata) {
             return NextResponse.json({ error: 'Failed to generate metadata' }, { status: 500 });
+        }
+
+        // Validate before saving
+        const validation = validatePost(content, metadata);
+        if (!validation.passed) {
+            console.warn('⚠️ Regeneration validation failed:', validation.issues);
+            return NextResponse.json(
+                { error: 'Regenerated post failed validation', issues: validation.issues },
+                { status: 422 }
+            );
         }
 
         const baseSlug = await generateSlug(metadata.title);

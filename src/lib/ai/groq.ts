@@ -32,24 +32,30 @@ export async function generateBlogPost(options: GeneratePostOptions) {
 
     const sysPrompt = configSystemPrompt + `\n\nAdditional style note: ${tone}`;
 
-    const userPrompt = `Write a comprehensive blog post about: ${topic}
-${context ? `\nContext/Background:\n${context}` : ''}
+    const userPrompt = `Write a practical, actionable blog post about: ${topic}
+${context ? `\nResearch context:\n${context}` : ''}
 
 Requirements:
 - Length: ${minWords}-${maxWords} words
-- Include code examples: ${includeCode ? 'Yes' : 'No'}
-- Tags to incorporate: ${tags.join(', ') || 'relevant to the topic'}
-- Format: MDX (Markdown with JSX support)
+- Code examples: ${includeCode ? 'Yes — include copy-pasteable snippets with language tags' : 'No'}
+- Tags: ${tags.join(', ') || 'relevant to the topic'}
+- Format: Standard Markdown ONLY (no JSX, no import/export)
 
 Structure:
-1. Engaging introduction with a hook
-2. Main content with clear sections
-3. Code examples (if applicable)
-4. Practical takeaways
-5. Call-to-action (encouraging readers to try building something)
+1. Hook — open with a specific problem or surprising result (NOT "In today's world...")
+2. Why it matters — 2-3 sentences of context
+3. Step-by-step solution — the core tutorial with real code
+4. Gotchas & real-world notes — things that tripped you up or surprised you
+5. Takeaway — ONE clear action item the reader should do next
 
-The post should feel like a genuine share from your development journey, not a generic tutorial.
-Return ONLY the MDX content, no preamble.`;
+Rules:
+- Every section must teach something the reader can USE immediately
+- Code blocks must have language tags (\`\`\`typescript, \`\`\`bash, etc.)
+- Do NOT include any UI text like "Copy", navigation elements, or HTML comments
+- Do NOT use <Callout>, <Note>, <Tip> or any JSX component tags
+- End with a clear call-to-action: what should the reader build/try/install next?
+
+Return ONLY the Markdown content. No preamble, no wrapper fences.`;
 
     try {
         const completion = await groq.chat.completions.create({

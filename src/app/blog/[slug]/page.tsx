@@ -6,6 +6,7 @@ import CTASection from '@/components/blog/CTASection';
 import ReadingProgress from '@/components/blog/ReadingProgress';
 import CodeBlock from '@/components/blog/CodeBlock';
 import Callout from '@/components/blog/Callout';
+import { sanitizeContent } from '@/lib/ai/sanitize';
 import { author, blog } from '@/lib/config/site';
 import { Metadata } from 'next';
 import Link from 'next/link';
@@ -58,28 +59,17 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 /**
  * Clean AI-generated content so MDX can render it properly.
- * Strips ```mdx wrappers, import statements, and other artifacts.
+ * Uses the shared sanitizer + a final pass for any remaining unknown JSX.
  */
 function cleanContent(raw: string): string {
-    let content = raw;
+    // Run the shared sanitizer (strips UI artifacts, fixes code blocks, etc.)
+    let content = sanitizeContent(raw);
 
-    // Strip ```mdx / ``` wrappers
-    content = content.replace(/^```mdx\s*\n?/i, '');
-    content = content.replace(/\n?```\s*$/i, '');
-
-    // Remove import statements (MDX tries to execute them)
-    content = content.replace(/^import\s+.*?;\s*$/gm, '');
-
-    // Remove export statements (default/named) that MDX can't handle
-    content = content.replace(/^export\s+(default\s+)?.*?;\s*$/gm, '');
-
-    // Strip unknown self-closing JSX tags (e.g. <Component />) that aren't in our map
+    // Extra safety: strip any remaining unknown JSX for the MDX renderer
     const known = Object.keys(mdxComponents).join('|');
     const unknownSelfClosing = new RegExp(`<(?!(?:${known}|[a-z]))[A-Z]\\w*\\b[^>]*/>`, 'g');
     content = content.replace(unknownSelfClosing, '');
 
-    // Convert unknown opening/closing JSX blocks to blockquotes
-    // e.g. <SomeComponent>...</SomeComponent> → > ...
     const unknownBlock = new RegExp(
         `<(?!(?:${known}|[a-z]))[A-Z](\\w*)\\b[^>]*>([\\s\\S]*?)</[A-Z]\\1>`,
         'g',
@@ -91,9 +81,6 @@ function cleanContent(raw: string): string {
             .map((l: string) => `> ${l}`)
             .join('\n'),
     );
-
-    // Remove leading blank lines
-    content = content.replace(/^\s*\n+/, '');
 
     return content;
 }

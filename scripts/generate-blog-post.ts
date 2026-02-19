@@ -10,13 +10,15 @@ const importLib = async () => {
     const { generateBlogPost, generatePostMetadata, generateSlug } = await import('../src/lib/ai/gemini');
     const { discoverAndResearch } = await import('../src/lib/ai/topic-discovery');
     const { checkContentQuality } = await import('../src/lib/ai/quality-check');
+    const { sanitizeContent } = await import('../src/lib/ai/sanitize');
+    const { validatePost } = await import('../src/lib/ai/validate-post');
     const { PostsDB } = await import('../src/lib/db/posts');
     const config = await import('../src/lib/config/site');
-    return { generateBlogPost, generatePostMetadata, generateSlug, discoverAndResearch, checkContentQuality, PostsDB, config };
+    return { generateBlogPost, generatePostMetadata, generateSlug, discoverAndResearch, checkContentQuality, sanitizeContent, validatePost, PostsDB, config };
 };
 
 async function main() {
-    const { generateBlogPost, generatePostMetadata, generateSlug, discoverAndResearch, checkContentQuality, PostsDB, config } = await importLib();
+    const { generateBlogPost, generatePostMetadata, generateSlug, discoverAndResearch, checkContentQuality, sanitizeContent, validatePost, PostsDB, config } = await importLib();
     const { default: prisma } = await import('../src/lib/db/prisma');
 
     if (!process.env.GEMINI_API_KEY) {
@@ -125,6 +127,9 @@ async function main() {
             content = result.content;
             model = result.model;
 
+            // Sanitize UI artifacts, fix code blocks, strip JSX
+            content = sanitizeContent(content);
+
             console.log('✅ Checking content quality...');
             qualityCheck = checkContentQuality(content, 600);
 
@@ -145,7 +150,17 @@ async function main() {
         console.log('📊 Generating metadata...');
         const metadata = await generatePostMetadata(content, topic);
         if (!metadata) throw new Error('Failed to generate metadata');
-
+        // ── Pre-publish Validation ─────────────────────────────
+        const validation = validatePost(content, metadata);
+        if (!validation.passed) {
+            console.error('❌ Post validation failed:');
+            validation.issues.forEach(i => console.error(`   [${i.severity}] ${i.rule}: ${i.message}`));
+            process.exit(1);
+        }
+        if (validation.issues.length > 0) {
+            console.warn('⚠️ Validation warnings:');
+            validation.issues.forEach(i => console.warn(`   [${i.severity}] ${i.rule}: ${i.message}`));
+        }
         const slug = await generateSlug(metadata.title);
         const stats = readingTime(content);
 

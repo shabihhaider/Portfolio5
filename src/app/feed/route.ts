@@ -23,7 +23,7 @@ export async function GET() {
       <guid isPermaLink="true">${baseUrl}/blog/${post.slug}</guid>
       <pubDate>${post.publishedAt ? new Date(post.publishedAt).toUTCString() : new Date().toUTCString()}</pubDate>
       <description><![CDATA[${post.excerpt || ''}]]></description>
-      ${post.tags.map(tag => `<category>${tag}</category>`).join('')}
+      ${post.tags.map((tag: string) => `<category>${tag}</category>`).join('')}
     </item>`;
       })
       .join('')}

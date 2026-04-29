@@ -1,15 +1,13 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Github, ExternalLink } from "lucide-react";
+import { ExternalLink } from "lucide-react";
 import { useState, useRef } from "react";
 import { DemoCredentials } from "./DemoCredentials";
 
 interface ProjectCardProps {
     title: string;
     description: string;
-    techStack: string[];
-    githubUrl?: string;
     liveUrl?: string;
     size?: "small" | "medium" | "large" | "wide" | "tall";
     gradient?: string;
@@ -22,8 +20,6 @@ interface ProjectCardProps {
 export function ProjectCard({
     title,
     description,
-    techStack,
-    githubUrl,
     liveUrl,
     size = "medium",
     gradient = "from-brand/10 to-transparent",
@@ -43,10 +39,10 @@ export function ProjectCard({
 
     const sizeClasses = {
         small: "col-span-1 row-span-1 min-h-[320px]",
-        medium: "col-span-1 md:col-span-2 row-span-1 min-h-[320px]",
-        large: "col-span-1 md:col-span-2 row-span-1 md:row-span-2 min-h-[320px] md:min-h-[660px]",
-        wide: "col-span-1 md:col-span-4 row-span-1 min-h-[320px]",
-        tall: "col-span-1 md:col-span-2 row-span-1 md:row-span-2 min-h-[320px] md:min-h-[660px]",
+        medium: "col-span-1 md:col-span-2 row-span-1 min-h-[400px]",
+        large: "col-span-1 md:col-span-2 row-span-1 md:row-span-2 min-h-[400px] md:min-h-[660px]",
+        wide: "col-span-1 md:col-span-4 row-span-1 min-h-[400px]",
+        tall: "col-span-1 md:col-span-2 row-span-1 md:row-span-2 min-h-[400px] md:min-h-[660px]",
     };
 
     return (
@@ -96,7 +92,7 @@ export function ProjectCard({
                 <div className={`absolute inset-0 bg-gradient-to-br ${gradient} opacity-50`} />
 
                 {/* Content */}
-                <div className="relative h-full p-6 md:p-8 flex flex-col">
+                <div className="relative p-6 md:p-8 flex flex-col">
                     {/* Header */}
                     <div className="flex-1">
                         <h3 className="text-2xl md:text-3xl font-heading font-bold text-white mb-3 group-hover:text-brand transition-colors duration-300">
@@ -107,59 +103,24 @@ export function ProjectCard({
                         </p>
                     </div>
 
-                    {/* Tech Stack - Reveals on Hover */}
-                    <motion.div
-                        initial={{ opacity: 0, y: 10 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        className="opacity-60 group-hover:opacity-100 transition-opacity duration-300"
-                    >
-                        <div className="text-xs font-mono text-gray-600 mb-2">{"// STACK"}</div>
-                        <div className="flex flex-wrap gap-2">
-                            {techStack.map((tech, index) => (
-                                <motion.span
-                                    key={tech}
-                                    initial={{ opacity: 0, scale: 0.8 }}
-                                    whileInView={{ opacity: 1, scale: 1 }}
-                                    transition={{ delay: index * 0.05 }}
-                                    className="px-3 py-1.5 text-sm font-mono rounded bg-brand/10 text-brand border border-brand/20"
-                                >
-                                    {tech}
-                                </motion.span>
-                            ))}
-                        </div>
-                    </motion.div>
-
                     {/* Action Links */}
-                    <div className="flex gap-3 mt-6 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                        {githubUrl && (
-                            <a
-                                href={githubUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="flex items-center gap-2 px-4 py-2 text-sm font-mono text-gray-300 hover:text-brand border border-white/20 hover:border-brand/40 rounded-lg transition-all duration-300 hover:scale-105"
-                            >
-                                <Github className="w-4 h-4" />
-                                Code
-                            </a>
-                        )}
-                        {liveUrl && (
+                    {liveUrl && (
+                        <div className="mt-6">
                             <a
                                 href={liveUrl}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="flex items-center gap-2 px-4 py-2 text-sm font-mono text-black bg-brand hover:bg-brand/90 rounded-lg transition-all duration-300 hover:scale-105 hover:shadow-[0_0_20px_rgba(204,255,0,0.3)]"
+                                className="inline-flex items-center gap-2 px-4 py-2 text-sm font-mono text-black bg-brand hover:bg-brand/90 rounded-lg transition-all duration-300 hover:scale-105 hover:shadow-[0_0_20px_rgba(204,255,0,0.3)]"
                             >
                                 <ExternalLink className="w-4 h-4" />
                                 Live
                             </a>
-                        )}
-                    </div>
+                        </div>
+                    )}
 
                     {/* Demo Credentials */}
                     {demoCredentials && (
-                        <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                            <DemoCredentials email={demoCredentials.email} password={demoCredentials.password} />
-                        </div>
+                        <DemoCredentials email={demoCredentials.email} password={demoCredentials.password} />
                     )}
                 </div>
             </div>

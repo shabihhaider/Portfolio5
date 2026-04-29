@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PostsDB } from '@/lib/db/posts';
 // import { BlogPost } from '@/lib/db/schema'; // Deprecated
-import { Post } from '@prisma/client';
 
 // GET all posts
 export async function GET(request: NextRequest) {

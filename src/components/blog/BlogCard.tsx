@@ -48,7 +48,7 @@ export default function BlogCard({ post }: { post: BlogPost }) {
 
                     {/* Tags */}
                     <div className="flex flex-wrap gap-1.5 mt-5">
-                        {post.tags.slice(0, 3).map((tag) => (
+                        {post.tags.slice(0, 3).map((tag: string) => (
                             <span
                                 key={tag}
                                 className="px-2 py-0.5 rounded-md bg-white/[0.04] text-[10px] font-mono text-gray-500 tracking-wide"

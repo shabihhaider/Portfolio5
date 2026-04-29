@@ -13,36 +13,52 @@ export const author = {
     name: 'Shabih Haider',
     fullName: 'Muhammad Shabih Haider',
     initials: 'SH',
-    title: 'Full Stack Developer',
-    roles: ['Full-Stack Developer', 'AI Enthusiast', 'Tech Innovator'],
+    title: 'Web Developer & AI Specialist',
+    roles: ['Landing Pages', 'WordPress', 'AI Integrations', 'Full-Stack Dev'],
     twitter: '@shabihhaider',
     email: 'shabihhaider191@gmail.com',
-    bio: 'Crafting intelligent web experiences with React & AI.',
+    bio: 'Building high-converting websites, WordPress solutions, and AI-powered applications for businesses worldwide.',
     social: {
         github: 'https://github.com/shabihhaider',
         linkedin: 'https://www.linkedin.com/in/muhammad-shabih-haider/',
         instagram: 'https://www.instagram.com/muhammadshabihhaider/',
+        upwork: 'https://www.upwork.com/freelancers/shabihhaider',
     },
+} as const;
+
+// ── Agency ───────────────────────────────────────────────
+export const agency = {
+    name: 'Shabih.',
+    tagline: 'Web Development & AI Integration',
+    availability: true,
+    responseTime: '< 24 hours',
+    timezone: 'PKT (UTC+5)',
+    location: 'Lahore, Pakistan',
+    founded: '2026',
 } as const;
 
 // ── Site / URLs ───────────────────────────────────────────
 export const site = {
-    url: process.env.NEXT_PUBLIC_SITE_URL || 'https://portfolio5-olive.vercel.app',
-    name: `${author.name} Portfolio`,
+    url: process.env.NEXT_PUBLIC_SITE_URL || 'https://shabih.tech',
+    name: 'Shabih. | Web Development & AI Agency',
     locale: 'en_US',
     language: 'en-us',
 } as const;
 
 // ── SEO / Metadata ────────────────────────────────────────
 export const seo = {
-    titleDefault: `${author.name} | ${author.title}`,
-    titleTemplate: `%s | ${author.name}`,
+    titleDefault: 'Shabih. | Web Development & AI Integration Agency',
+    titleTemplate: '%s | Shabih.',
     description:
-        `Portfolio of ${author.name}, a ${author.title} specializing in React, Next.js, AI Integration, and Modern Web Technologies. View my projects and skills.`,
-    ogDescription: 'Building the impossible with modern web technologies and AI.',
+        'Professional web development agency specializing in high-converting landing pages, WordPress development, and AI integrations. React, Next.js, and modern web technologies. Fast delivery, transparent pricing.',
+    ogDescription: 'Web development agency building landing pages, WordPress sites, and AI-powered applications for businesses worldwide.',
     keywords: [
-        'Full Stack Developer', 'React', 'Next.js', 'Portfolio',
-        'Web Development', 'AI', author.name,
+        'web development agency', 'freelance web developer Pakistan',
+        'hire web developer Pakistan', 'landing page development Next.js',
+        'WordPress developer for hire', 'AI integration service',
+        'custom web development agency', 'OpenAI chatbot integration',
+        'React Next.js developer', 'affordable web development agency',
+        author.name,
     ],
 } as const;
 
@@ -62,12 +78,12 @@ export const blog = {
 
 // ── CTA (end of blog posts) ──────────────────────────────
 export const cta = {
-    heading: 'Build the Future With Me',
-    headingHighlight: 'Future',
+    heading: 'Start Your Next',
+    headingHighlight: 'Project',
     description:
-        'Need a high-performance, AI-integrated web application? Let\'s turn your concept into a production-ready reality.',
+        'Need a landing page, WordPress site, or AI integration? Let\'s discuss your project and deliver results fast.',
     primaryButton: { text: 'Start a Project', href: '/#contact' },
-    secondaryButton: { text: 'View Portfolio', href: '/' },
+    secondaryButton: { text: 'View Our Work', href: '/#work' },
 } as const;
 
 // ── Email Capture / Newsletter ────────────────────────────
@@ -215,7 +231,7 @@ export const ogBranding = {
     tagBg: 'rgba(204, 255, 0, 0.15)',
     tagColor: '#CCFF00',
     tagBorder: 'rgba(204, 255, 0, 0.3)',
-    blogName: 'Digital Lab Notes',
+    blogName: 'Shabih. Blog',
     width: 1200,
     height: 630,
 } as const;

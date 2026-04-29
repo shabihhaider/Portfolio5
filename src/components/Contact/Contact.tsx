@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import { useState } from "react";
-import { FaGithub, FaLinkedin, FaInstagram, FaCheck, FaCopy } from "react-icons/fa6";
+import { FaLinkedin, FaInstagram, FaCheck, FaCopy } from "react-icons/fa6";
 import { author } from "@/lib/config/site";
 
 export function Contact() {
@@ -11,6 +11,8 @@ export function Contact() {
     const [formData, setFormData] = useState({
         name: '',
         email: '',
+        projectType: '',
+        budget: '',
         message: ''
     });
 
@@ -28,7 +30,7 @@ export function Contact() {
             if (!res.ok) throw new Error('Failed to send');
 
             setFormState('success');
-            setFormData({ name: '', email: '', message: '' });
+            setFormData({ name: '', email: '', projectType: '', budget: '', message: '' });
         } catch {
             setFormState('error');
             setTimeout(() => setFormState('idle'), 3000);
@@ -42,7 +44,6 @@ export function Contact() {
     };
 
     const socialLinks = [
-        { icon: FaGithub, href: author.social.github, label: "GitHub" },
         { icon: FaLinkedin, href: author.social.linkedin, label: "LinkedIn" },
         { icon: FaInstagram, href: author.social.instagram, label: "Instagram" },
     ];
@@ -65,17 +66,17 @@ export function Contact() {
                 >
                     <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-brand/20 bg-brand/5 backdrop-blur-sm mb-6">
                         <span className="w-2 h-2 rounded-full bg-brand animate-pulse" />
-                        <span className="text-sm font-mono text-brand">INITIALIZE CONNECTION</span>
+                        <span className="text-sm font-mono text-brand">START A PROJECT</span>
                     </div>
 
                     <h2 className="text-5xl md:text-6xl font-heading font-bold mb-6">
-                        Let&apos;s Build
+                        Start Your
                         <br />
-                        <span className="text-gradient-animated">The Impossible</span>
+                        <span className="text-gradient-animated">Project</span>
                     </h2>
 
                     <p className="text-xl text-gray-400 max-w-2xl mx-auto font-mono">
-                        {"// Open channel for new transmissions"}
+                        {"// Ready to bring your idea to life"}
                     </p>
                 </motion.div>
 
@@ -90,13 +91,13 @@ export function Contact() {
                     >
                         <div>
                             <h3 className="text-3xl md:text-4xl font-heading font-bold text-white mb-4">
-                                Have an idea?
+                                Have a project in mind?
                             </h3>
                             <p className="text-lg text-gray-400 leading-relaxed">
-                                I&apos;m currently open for <span className="text-brand">freelance work</span> and
-                                <span className="text-brand"> collaborations</span>. Whether you need a
-                                full-stack application, AI integration, or just want to discuss tech—
-                                let&apos;s connect.
+                                Need a <span className="text-brand">landing page</span>,
+                                <span className="text-brand"> WordPress site</span>, or
+                                <span className="text-brand"> AI integration</span>? Tell us about your
+                                project and we&apos;ll get back to you within 24 hours with a plan and quote.
                             </p>
                         </div>
 
@@ -174,10 +175,10 @@ export function Contact() {
                                         <FaCheck className="text-4xl text-green-500" />
                                     </div>
                                     <h3 className="text-2xl font-heading font-bold text-white mb-2 text-center">
-                                        Transmission Received
+                                        Message Received
                                     </h3>
                                     <p className="text-gray-400 text-center mb-8 max-w-sm">
-                                        Thanks for reaching out! I&apos;ve received your message and will get back to you within 24-48 hours.
+                                        Thanks for reaching out! We&apos;ve received your project inquiry and will get back to you within 24 hours.
                                     </p>
 
                                     <div className="flex flex-col items-center gap-4 w-full">
@@ -212,7 +213,7 @@ export function Contact() {
                                         <div className="w-3 h-3 rounded-full bg-yellow-500" />
                                         <div className="w-3 h-3 rounded-full bg-green-500" />
                                         <span className="ml-4 text-sm font-mono text-gray-500">
-                                            transmission.sh
+                                            new-project.sh
                                         </span>
                                     </div>
 
@@ -246,6 +247,45 @@ export function Contact() {
                                         />
                                     </div>
 
+                                    {/* Project Type & Budget */}
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-mono text-gray-500">
+                                                {'>'} Project_
+                                            </label>
+                                            <select
+                                                value={formData.projectType}
+                                                onChange={(e) => setFormData({ ...formData, projectType: e.target.value })}
+                                                className="w-full px-4 py-3 rounded-lg bg-black/50 border border-white/10 text-brand font-mono focus:border-brand/50 focus:outline-none focus:ring-1 focus:ring-[#CCFF00] transition-all appearance-none"
+                                            >
+                                                <option value="" className="bg-black text-gray-500">Select type</option>
+                                                <option value="landing-page" className="bg-black">Landing Page</option>
+                                                <option value="wordpress" className="bg-black">WordPress</option>
+                                                <option value="ai-integration" className="bg-black">AI Integration</option>
+                                                <option value="custom-dev" className="bg-black">Custom Development</option>
+                                                <option value="other" className="bg-black">Other</option>
+                                            </select>
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-mono text-gray-500">
+                                                {'>'} Budget_
+                                            </label>
+                                            <select
+                                                value={formData.budget}
+                                                onChange={(e) => setFormData({ ...formData, budget: e.target.value })}
+                                                className="w-full px-4 py-3 rounded-lg bg-black/50 border border-white/10 text-brand font-mono focus:border-brand/50 focus:outline-none focus:ring-1 focus:ring-[#CCFF00] transition-all appearance-none"
+                                            >
+                                                <option value="" className="bg-black text-gray-500">Select range</option>
+                                                <option value="under-100" className="bg-black">Under $100</option>
+                                                <option value="100-400" className="bg-black">$100 – $400</option>
+                                                <option value="400-800" className="bg-black">$400 – $800</option>
+                                                <option value="800-1500" className="bg-black">$800 – $1,500</option>
+                                                <option value="1500+" className="bg-black">$1,500+</option>
+                                                <option value="discuss" className="bg-black">Let&apos;s Discuss</option>
+                                            </select>
+                                        </div>
+                                    </div>
+
                                     {/* Message Field */}
                                     <div className="space-y-2">
                                         <label className="text-sm font-mono text-gray-500">
@@ -253,10 +293,10 @@ export function Contact() {
                                         </label>
                                         <textarea
                                             required
-                                            rows={4}
+                                            rows={3}
                                             value={formData.message}
                                             onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                                            placeholder="Tell me about your project..."
+                                            placeholder="Tell us about your project..."
                                             className="w-full px-4 py-3 rounded-lg bg-black/50 border border-white/10 text-brand font-mono placeholder:text-gray-600 focus:border-brand/50 focus:outline-none focus:ring-1 focus:ring-[#CCFF00] transition-all resize-none"
                                         />
                                     </div>
@@ -272,7 +312,7 @@ export function Contact() {
                                     >
                                         {formState === 'idle' && (
                                             <span className="flex items-center justify-center gap-2">
-                                                <span>SEND TRANSMISSION</span>
+                                                <span>SEND MESSAGE</span>
                                                 <span className="text-xl">→</span>
                                             </span>
                                         )}

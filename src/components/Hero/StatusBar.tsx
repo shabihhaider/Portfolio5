@@ -31,7 +31,7 @@ export function StatusBar() {
             <span className="text-gray-600">|</span>
             <span>{time || "00:00 AM"}</span>
             <span className="text-gray-600">|</span>
-            <span className="text-brand">System: Online & Building</span>
+            <span className="text-brand">Available for Projects</span>
         </div>
     );
 }

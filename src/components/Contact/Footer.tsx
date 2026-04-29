@@ -1,22 +1,22 @@
 "use client";
 
-import { FaGithub, FaLinkedin, FaInstagram, FaHeart } from "react-icons/fa6";
+import { FaLinkedin, FaInstagram } from "react-icons/fa6";
 import { author } from "@/lib/config/site";
 
 export function Footer() {
     const currentYear = new Date().getFullYear();
 
     const socialLinks = [
-        { icon: FaGithub, href: author.social.github, label: "GitHub" },
         { icon: FaLinkedin, href: author.social.linkedin, label: "LinkedIn" },
         { icon: FaInstagram, href: author.social.instagram, label: "Instagram" },
     ];
 
     const navLinks = [
         { label: "Home", href: "#" },
-        { label: "Projects", href: "#work" },
-        { label: "Skills", href: "#skills" },
-        { label: "Timeline", href: "#timeline" },
+        { label: "Services", href: "#services" },
+        { label: "Portfolio", href: "#work" },
+        { label: "Process", href: "#process" },
+        { label: "Blog", href: "/blog" },
         { label: "Contact", href: "#contact" },
     ];
 
@@ -36,9 +36,10 @@ export function Footer() {
                     </div>
 
                     {/* Navigation */}
-                    <div className="space-y-4">
+                    <div className="flex justify-center">
+                        <div className="space-y-4">
                         <h4 className="text-sm font-mono text-gray-500">{"// NAVIGATION"}</h4>
-                        <nav className="flex flex-wrap gap-4">
+                        <nav className="grid grid-cols-2 gap-x-8 gap-y-3">
                             {navLinks.map((link) => (
                                 <a
                                     key={link.label}
@@ -49,10 +50,11 @@ export function Footer() {
                                 </a>
                             ))}
                         </nav>
+                        </div>
                     </div>
 
                     {/* Social */}
-                    <div className="space-y-4">
+                    <div className="space-y-4 flex flex-col items-end">
                         <h4 className="text-sm font-mono text-gray-500">{"// CONNECT"}</h4>
                         <div className="flex gap-3">
                             {socialLinks.map((social) => (
@@ -79,11 +81,6 @@ export function Footer() {
                     {/* Copyright */}
                     <p className="text-sm text-gray-600 font-mono">
                         © {currentYear} {author.fullName}. All rights reserved.
-                    </p>
-
-                    {/* Built With */}
-                    <p className="text-sm text-gray-600 font-mono flex items-center gap-2">
-                        Built with <FaHeart className="text-red-500 text-xs" /> using Next.js, Tailwind & Coffee
                     </p>
 
                     {/* System Status */}

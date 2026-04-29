@@ -13,62 +13,62 @@ export interface TimelineEvent {
 export const timelineEvents: TimelineEvent[] = [
     {
         id: "4",
-        date: "Jan 2026",
+        date: "2026",
         commitHash: "#f4a2c9",
-        title: "AI Fashion Stylist",
-        description: "Building intelligent wardrobe recommendation system",
+        title: "Agency Launch",
+        description: "Founded Shabih. — a web development and AI integration agency serving clients worldwide",
         details: [
-            "Developing computer vision models for clothing classification",
-            "Training TensorFlow models on 50K+ fashion images",
-            "Implementing personalized styling algorithms"
+            "Launched agency offering landing pages, WordPress, and AI services",
+            "Open for clients on Upwork and direct inquiries",
+            "Delivering production-ready projects with fast turnaround"
         ],
-        tags: ["AI/ML", "Production", "Innovation"],
-        icon: "🚀",
-        category: "project"
+        tags: ["Agency", "Launch", "Open for Work"],
+        icon: "🏆",
+        category: "achievement"
     },
     {
         id: "3",
-        date: "Sep 2025",
+        date: "2025",
         commitHash: "#a7d3e5",
-        title: "HydroPak Dashboard Launch",
-        description: "Deployed full-stack SaaS platform for distribution management",
+        title: "Production Projects",
+        description: "Built and deployed multiple production-grade applications with real users",
         details: [
-            "Built real-time analytics and inventory tracking",
-            "Automated order processing workflows",
-            "Successfully managing live customer operations"
+            "HydroPak — full-stack SaaS dashboard for distribution management",
+            "AI Fashion Stylist — deep learning wardrobe recommendation system",
+            "Unified Social Insights — analytics platform with AI sentiment analysis"
         ],
-        tags: ["Next.js", "PostgreSQL", "Production"],
+        tags: ["Next.js", "AI/ML", "Production"],
         icon: "🚀",
         category: "project"
     },
     {
         id: "2",
-        date: "2024 - Present",
+        date: "2024 – Present",
         commitHash: "#b8e2f1",
-        title: "BS Computer Science",
-        description: "Specializing in AI & Web Systems",
+        title: "Full-Stack Mastery",
+        description: "Expanded expertise across frontend, backend, AI, and WordPress development",
         details: [
-            "Focus on Machine Learning and Deep Learning",
-            "Advanced Full-Stack Development",
-            "Lahore, Pakistan"
+            "Frontend: React, Next.js, TypeScript, Tailwind CSS",
+            "Backend: Node.js, Python, PostgreSQL, FastAPI",
+            "AI/ML: TensorFlow, OpenCV, OpenAI integrations"
         ],
-        tags: ["Education", "AI", "Web Dev"],
-        icon: "🎓",
-        category: "education"
+        tags: ["Full-Stack", "AI", "WordPress"],
+        icon: "💡",
+        category: "learning"
     },
     {
         id: "1",
-        date: "Early 2024",
+        date: "2024",
         commitHash: "#c9f2d4",
-        title: "The Spark",
-        description: "Journey began with C++ and algorithmic thinking",
+        title: "The Foundation",
+        description: "Started BS Computer Science and began building with modern web technologies",
         details: [
-            "First 'Hello World' in C++",
-            "Discovered passion for problem-solving",
-            "Built foundation in computer science fundamentals"
+            "BS Computer Science at university in Lahore, Pakistan",
+            "First production project built and deployed",
+            "Developed strong foundation in algorithms and system design"
         ],
-        tags: ["Learning", "Foundations"],
-        icon: "💡",
-        category: "learning"
+        tags: ["Education", "Foundations"],
+        icon: "🎓",
+        category: "education"
     }
 ];

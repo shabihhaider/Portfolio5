@@ -33,17 +33,17 @@ export function Timeline() {
                 >
                     <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-brand/20 bg-brand/5 backdrop-blur-sm mb-6">
                         <span className="w-2 h-2 rounded-full bg-brand animate-pulse" />
-                        <span className="text-sm font-mono text-brand">SYSTEM LOGS</span>
+                        <span className="text-sm font-mono text-brand">OUR JOURNEY</span>
                     </div>
 
                     <h2 className="text-5xl md:text-6xl font-heading font-bold mb-6">
-                        The Evolution
+                        The Story
                         <br />
-                        <span className="text-gradient-animated">Timeline</span>
+                        <span className="text-gradient-animated">So Far</span>
                     </h2>
 
                     <p className="text-xl text-gray-400 max-w-2xl mx-auto font-mono">
-                        {"// Tracking the journey from first commit to production"}
+                        {"// From first commit to serving clients worldwide"}
                     </p>
                 </motion.div>
 

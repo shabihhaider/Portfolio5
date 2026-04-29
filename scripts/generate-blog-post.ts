@@ -79,7 +79,7 @@ async function main() {
             });
             const existingSlugs = [
                 ...existingPosts.map(p => p.slug),
-                ...draftPosts.map(p => p.title.toLowerCase()),
+                ...draftPosts.map((p: { title: string }) => p.title.toLowerCase()),
             ];
 
             const research = await discoverAndResearch([...focusAreas], existingSlugs);

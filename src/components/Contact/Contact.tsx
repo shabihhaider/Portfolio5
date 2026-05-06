@@ -162,7 +162,7 @@ export function Contact() {
                         whileInView={{ opacity: 1, x: 0 }}
                         viewport={{ once: true }}
                     >
-                        <div className="p-8 rounded-2xl border border-white/10 bg-white/5 backdrop-blur-md h-full relative overflow-hidden">
+                        <div className="p-8 rounded-2xl border border-white/10 bg-white/5 backdrop-blur-md h-full relative overflow-hidden min-h-[520px]">
                             {/* Success Overlay - Replaces Form */}
                             {formState === 'success' ? (
                                 <motion.div

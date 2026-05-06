@@ -1,6 +1,7 @@
 import { author, site, agency } from '@/lib/config/site';
 import { services } from '@/data/services';
 import { faqItems } from '@/data/faq';
+import { caseStudies, type CaseStudy } from '@/data/case-studies';
 
 export function getOrganizationSchema() {
     return {
@@ -46,6 +47,52 @@ export function getWebPageSchema() {
             '@type': 'ProfessionalService',
             name: agency.name,
         },
+    };
+}
+
+export function getCaseStudySchema(study: CaseStudy) {
+    return {
+        '@context': 'https://schema.org',
+        '@type': 'Article',
+        headline: `${study.title} Case Study`,
+        description: study.tagline,
+        url: `${site.url}/work/${study.slug}`,
+        author: {
+            '@type': 'Person',
+            name: author.fullName,
+        },
+        publisher: {
+            '@type': 'Organization',
+            name: agency.name,
+            url: site.url,
+        },
+        articleSection: study.category,
+        ...(study.techStack && { keywords: study.techStack.join(', ') }),
+        breadcrumb: {
+            '@type': 'BreadcrumbList',
+            itemListElement: [
+                { '@type': 'ListItem', position: 1, name: 'Home', item: site.url },
+                { '@type': 'ListItem', position: 2, name: 'Work', item: `${site.url}/work` },
+                { '@type': 'ListItem', position: 3, name: study.title, item: `${site.url}/work/${study.slug}` },
+            ],
+        },
+    };
+}
+
+export function getWorkPageSchema() {
+    return {
+        '@context': 'https://schema.org',
+        '@type': 'ItemList',
+        name: 'Case Studies — Shabih.',
+        description: 'Portfolio of web development and AI integration projects.',
+        url: `${site.url}/work`,
+        numberOfItems: caseStudies.length,
+        itemListElement: caseStudies.map((s, i) => ({
+            '@type': 'ListItem',
+            position: i + 1,
+            name: s.title,
+            url: `${site.url}/work/${s.slug}`,
+        })),
     };
 }
 

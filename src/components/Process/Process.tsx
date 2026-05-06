@@ -44,7 +44,6 @@ export function Process() {
                             key={step.id}
                             step={step}
                             index={index}
-                            isLast={index === processSteps.length - 1}
                         />
                     ))}
                 </div>

@@ -14,10 +14,10 @@ export const author = {
     fullName: 'Muhammad Shabih Haider',
     initials: 'SH',
     title: 'Web Developer & AI Specialist',
-    roles: ['Landing Pages', 'WordPress', 'AI Integrations', 'Full-Stack Dev'],
+    roles: ['Landing Pages', 'WordPress', 'AI & SaaS', 'Mobile Apps'],
     twitter: '@shabihhaider',
     email: 'shabihhaider191@gmail.com',
-    bio: 'Building high-converting websites, WordPress solutions, and AI-powered applications for businesses worldwide.',
+    bio: 'Building AI-powered web apps, custom SaaS platforms, landing pages, WordPress solutions, and mobile applications for founders and businesses.',
     social: {
         github: 'https://github.com/shabihhaider',
         linkedin: 'https://www.linkedin.com/in/muhammad-shabih-haider/',

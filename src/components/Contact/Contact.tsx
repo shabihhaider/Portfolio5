@@ -94,16 +94,16 @@ export function Contact() {
                                 Have a project in mind?
                             </h3>
                             <p className="text-lg text-gray-400 leading-relaxed">
-                                Need a <span className="text-brand">landing page</span>,
-                                <span className="text-brand"> WordPress site</span>, or
-                                <span className="text-brand"> AI integration</span>? Tell us about your
-                                project and we&apos;ll get back to you within 24 hours with a plan and quote.
+                                Need a <span className="text-brand">landing page</span>,{" "}
+                                <span className="text-brand">WordPress site</span>,{" "}
+                                <span className="text-brand">AI integration</span>,{" "}
+                                <span className="text-brand">SaaS dashboard</span>, or{" "}
+                                <span className="text-brand">mobile app</span>? Tell us what you&apos;re building and we&apos;ll get back within 24 hours with a plan and quote.
                             </p>
                         </div>
 
                         {/* Direct Email */}
                         <div className="space-y-4">
-                            <p className="text-sm font-mono text-gray-500">{"// DIRECT_LINK"}</p>
                             <button
                                 onClick={copyEmail}
                                 className="group flex items-center gap-3 text-lg font-mono text-white hover:text-brand transition-colors"
@@ -126,7 +126,6 @@ export function Contact() {
 
                         {/* Social Links */}
                         <div className="space-y-4">
-                            <p className="text-sm font-mono text-gray-500">{"// SOCIAL_NODES"}</p>
                             <div className="flex gap-4">
                                 {socialLinks.map((social) => (
                                     <a
@@ -182,7 +181,6 @@ export function Contact() {
                                     </p>
 
                                     <div className="flex flex-col items-center gap-4 w-full">
-                                        <p className="text-sm font-mono text-brand mb-2">{"// CONNECT_WITH_ME"}</p>
                                         <div className="flex gap-4">
                                             {socialLinks.map((social) => (
                                                 <a
@@ -263,6 +261,8 @@ export function Contact() {
                                                 <option value="wordpress" className="bg-black">WordPress</option>
                                                 <option value="ai-integration" className="bg-black">AI Integration</option>
                                                 <option value="custom-dev" className="bg-black">Custom Development</option>
+                                                <option value="saas-dashboard" className="bg-black">SaaS / Dashboard</option>
+                                                <option value="mobile-app" className="bg-black">Mobile App</option>
                                                 <option value="other" className="bg-black">Other</option>
                                             </select>
                                         </div>
@@ -276,11 +276,10 @@ export function Contact() {
                                                 className="w-full px-4 py-3 rounded-lg bg-black/50 border border-white/10 text-brand font-mono focus:border-brand/50 focus:outline-none focus:ring-1 focus:ring-[#CCFF00] transition-all appearance-none"
                                             >
                                                 <option value="" className="bg-black text-gray-500">Select range</option>
-                                                <option value="under-100" className="bg-black">Under $100</option>
-                                                <option value="100-400" className="bg-black">$100 – $400</option>
                                                 <option value="400-800" className="bg-black">$400 – $800</option>
                                                 <option value="800-1500" className="bg-black">$800 – $1,500</option>
-                                                <option value="1500+" className="bg-black">$1,500+</option>
+                                                <option value="1500-3000" className="bg-black">$1,500 – $3,000</option>
+                                                <option value="3000+" className="bg-black">$3,000+</option>
                                                 <option value="discuss" className="bg-black">Let&apos;s Discuss</option>
                                             </select>
                                         </div>
@@ -318,11 +317,18 @@ export function Contact() {
                                         )}
                                         {formState === 'sending' && (
                                             <span className="flex items-center justify-center gap-2">
-                                                <span className="animate-pulse">UPLOADING...</span>
+                                                <span className="animate-pulse">SENDING...</span>
                                                 <span className="w-4 h-4 border-2 border-brand border-t-transparent rounded-full animate-spin" />
                                             </span>
                                         )}
                                     </button>
+
+                                    {/* Error Message */}
+                                    {formState === 'error' && (
+                                        <p className="text-sm font-mono text-red-400 text-center">
+                                            Something went wrong — please try again or email directly.
+                                        </p>
+                                    )}
 
                                     {/* Terminal Footer */}
                                     <p className="text-xs font-mono text-gray-600 text-center">

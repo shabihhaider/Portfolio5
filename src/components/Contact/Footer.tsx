@@ -12,12 +12,10 @@ export function Footer() {
     ];
 
     const navLinks = [
-        { label: "Home", href: "#" },
-        { label: "Services", href: "#services" },
-        { label: "Portfolio", href: "#work" },
-        { label: "Process", href: "#process" },
-        { label: "Blog", href: "/blog" },
-        { label: "Contact", href: "#contact" },
+        { label: "Home", href: "/" },
+        { label: "Services", href: "/#services" },
+        { label: "Work", href: "/work" },
+        { label: "Contact", href: "/#contact" },
     ];
 
     return (
@@ -81,6 +79,12 @@ export function Footer() {
                     {/* Copyright */}
                     <p className="text-sm text-gray-600 font-mono">
                         © {currentYear} {author.fullName}. All rights reserved.
+                        <a
+                            href="/privacy"
+                            className="ml-3 text-gray-500 hover:text-brand transition-colors"
+                        >
+                            Privacy Policy
+                        </a>
                     </p>
 
                     {/* System Status */}

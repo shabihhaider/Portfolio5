@@ -6,10 +6,9 @@ import type { ProcessStep as ProcessStepType } from "@/data/process";
 interface ProcessStepProps {
     step: ProcessStepType;
     index: number;
-    isLast: boolean;
 }
 
-export function ProcessStep({ step, index, isLast }: ProcessStepProps) {
+export function ProcessStep({ step, index }: ProcessStepProps) {
     const Icon = step.icon;
 
     return (
@@ -20,18 +19,6 @@ export function ProcessStep({ step, index, isLast }: ProcessStepProps) {
             transition={{ duration: 0.5, delay: index * 0.15 }}
             className="relative flex-1"
         >
-            {/* Connector Line (desktop) */}
-            {!isLast && (
-                <div className="hidden md:block absolute top-8 left-[calc(50%+24px)] right-0 h-px">
-                    <div className="w-full h-full bg-gradient-to-r from-brand/40 to-white/10" />
-                    <div className="absolute right-0 top-1/2 -translate-y-1/2 w-2 h-2 rotate-45 border-t border-r border-brand/40" />
-                </div>
-            )}
-
-            {/* Connector Line (mobile) */}
-            {!isLast && (
-                <div className="md:hidden absolute left-8 top-[72px] bottom-0 w-px bg-gradient-to-b from-brand/40 to-white/10" />
-            )}
 
             <div className="group relative p-6 rounded-xl border border-white/10 bg-white/5 backdrop-blur-md hover:bg-white/10 hover:border-brand/30 transition-all duration-300">
                 {/* Step Number & Icon */}

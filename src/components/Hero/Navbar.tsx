@@ -5,11 +5,9 @@ import Link from "next/link";
 import { Menu, X } from "lucide-react";
 
 const navItems = [
-    { label: "Home", href: "#" },
     { label: "Services", href: "#services" },
-    { label: "Work", href: "#work" },
-    { label: "Process", href: "#process" },
-    { label: "Blog", href: "/blog" },
+    { label: "Work", href: "/work" },
+    { label: "Contact", href: "#contact" },
 ];
 
 export function Navbar() {
@@ -19,10 +17,11 @@ export function Navbar() {
     useEffect(() => {
         const handleScroll = () => {
             setScrolled(window.scrollY > 50);
+            if (mobileOpen) setMobileOpen(false);
         };
         window.addEventListener("scroll", handleScroll);
         return () => window.removeEventListener("scroll", handleScroll);
-    }, []);
+    }, [mobileOpen]);
 
     return (
         <nav

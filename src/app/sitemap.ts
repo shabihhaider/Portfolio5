@@ -1,6 +1,7 @@
 import { MetadataRoute } from 'next';
 import { PostsDB } from '@/lib/db/posts';
 import { site } from '@/lib/config/site';
+import { caseStudies } from '@/data/case-studies';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const baseUrl = site.url;
@@ -8,15 +9,24 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // Get all published posts
     const posts = await PostsDB.getPublishedPosts();
 
-    // Base routes (only pages that actually exist)
+    // Base routes
     const routes = [
-        '',
-        '/blog',
-    ].map((route) => ({
+        { route: '', priority: 1.0, freq: 'weekly' as const },
+        { route: '/work', priority: 0.9, freq: 'weekly' as const },
+        { route: '/blog', priority: 0.8, freq: 'weekly' as const },
+    ].map(({ route, priority, freq }) => ({
         url: `${baseUrl}${route}`,
         lastModified: new Date(),
-        changeFrequency: 'weekly' as const,
-        priority: route === '' ? 1 : 0.8,
+        changeFrequency: freq,
+        priority,
+    }));
+
+    // Case study pages — high priority, these convert leads
+    const caseStudyRoutes = caseStudies.map((study) => ({
+        url: `${baseUrl}/work/${study.slug}`,
+        lastModified: new Date(),
+        changeFrequency: 'monthly' as const,
+        priority: 0.9,
     }));
 
     // Blog post routes
@@ -27,5 +37,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         priority: 0.7,
     }));
 
-    return [...routes, ...postRoutes];
+    return [...routes, ...caseStudyRoutes, ...postRoutes];
 }

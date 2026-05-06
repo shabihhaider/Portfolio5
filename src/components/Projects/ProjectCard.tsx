@@ -15,6 +15,7 @@ interface ProjectCardProps {
         email: string;
         password: string;
     };
+    comingSoon?: boolean;
 }
 
 export function ProjectCard({
@@ -24,6 +25,7 @@ export function ProjectCard({
     size = "medium",
     gradient = "from-brand/10 to-transparent",
     demoCredentials,
+    comingSoon = false,
 }: ProjectCardProps) {
     const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
     const cardRef = useRef<HTMLDivElement>(null);
@@ -71,10 +73,11 @@ export function ProjectCard({
             </div>
 
             {/* Inner Card Content Container */}
-            <div className="absolute inset-[1px] rounded-2xl bg-[#121212] border border-white/10 overflow-hidden transition-colors duration-300 group-hover:border-brand/30">
+            <div className={`absolute inset-[1px] rounded-2xl bg-[#121212] border border-white/10 overflow-hidden transition-colors duration-300 group-hover:border-brand/30 flex flex-col ${comingSoon ? 'opacity-60' : ''}`}>
+
                 {/* Noise Texture Overlay */}
                 <div
-                    className="absolute inset-0 opacity-[0.015] mix-blend-overlay pointer-events-none"
+                    className="absolute inset-0 opacity-[0.015] mix-blend-overlay pointer-events-none z-10"
                     style={{
                         backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`,
                     }}
@@ -82,17 +85,48 @@ export function ProjectCard({
 
                 {/* Spotlight Effect */}
                 <motion.div
-                    className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
+                    className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-10"
                     style={{
                         background: `radial-gradient(600px circle at ${mousePosition.x}px ${mousePosition.y}px, rgba(204, 255, 0, 0.08), transparent 40%)`,
                     }}
                 />
 
-                {/* Gradient Background */}
-                <div className={`absolute inset-0 bg-gradient-to-br ${gradient} opacity-50`} />
+                {/* Visual preview area for comingSoon cards */}
+                {comingSoon && (
+                    <div className={`relative flex-1 bg-gradient-to-br ${gradient} flex items-center justify-center overflow-hidden`}>
+                        {/* Decorative phone mockups */}
+                        <div className="flex gap-4 items-end opacity-40">
+                            <div className="w-20 h-36 rounded-2xl border border-white/20 bg-white/5 flex flex-col gap-2 p-2">
+                                <div className="w-full h-2 rounded-full bg-white/20" />
+                                <div className="w-3/4 h-2 rounded-full bg-white/10" />
+                                <div className="mt-1 w-full h-8 rounded-lg bg-white/10" />
+                                <div className="w-full h-8 rounded-lg bg-white/10" />
+                            </div>
+                            <div className="w-20 h-44 rounded-2xl border border-white/20 bg-white/5 flex flex-col gap-2 p-2">
+                                <div className="w-full h-2 rounded-full bg-rose-400/30" />
+                                <div className="w-2/3 h-2 rounded-full bg-white/10" />
+                                <div className="mt-1 w-full h-10 rounded-lg bg-white/10" />
+                                <div className="w-full h-10 rounded-lg bg-rose-400/20" />
+                            </div>
+                            <div className="w-20 h-36 rounded-2xl border border-white/20 bg-white/5 flex flex-col gap-2 p-2">
+                                <div className="w-full h-2 rounded-full bg-white/20" />
+                                <div className="w-1/2 h-2 rounded-full bg-white/10" />
+                                <div className="mt-1 w-full h-8 rounded-lg bg-white/10" />
+                                <div className="w-full h-8 rounded-lg bg-white/10" />
+                            </div>
+                        </div>
+                        {/* Coming Soon Badge */}
+                        <div className="absolute top-4 left-4 z-20 px-3 py-1 rounded-full bg-black/40 border border-white/20 text-xs font-mono text-gray-400 backdrop-blur-sm">
+                            Coming Soon
+                        </div>
+                    </div>
+                )}
+
+                {/* Gradient Background (for non-comingSoon cards) */}
+                {!comingSoon && <div className={`absolute inset-0 bg-gradient-to-br ${gradient} opacity-50`} />}
 
                 {/* Content */}
-                <div className="relative p-6 md:p-8 flex flex-col">
+                <div className="relative p-6 md:p-8 flex flex-col shrink-0">
                     {/* Header */}
                     <div className="flex-1">
                         <h3 className="text-2xl md:text-3xl font-heading font-bold text-white mb-3 group-hover:text-brand transition-colors duration-300">

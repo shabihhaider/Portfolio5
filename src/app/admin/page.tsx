@@ -3,7 +3,7 @@ import { isAuthenticated } from '@/lib/auth/admin';
 import { PostsDB } from '@/lib/db/posts';
 import AdminStats from '@/components/admin/AdminStats';
 import PostsList from '@/components/admin/PostsList';
-import { Sparkles, BarChart3, Settings } from 'lucide-react';
+import { Sparkles, BarChart3, Settings, Briefcase } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
 
@@ -87,6 +87,17 @@ export default async function AdminDashboard() {
                                 <a href="/admin/settings" className="w-full px-4 py-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg font-medium transition text-left flex items-center gap-3 text-white group block">
                                     <Settings className="w-5 h-5 text-gray-400 group-hover:text-white transition-colors group-hover:rotate-90 transition-transform duration-500" />
                                     <span className="font-mono text-sm uppercase tracking-wide text-gray-300 group-hover:text-white">System Settings</span>
+                                </a>
+
+                                {/* Client Hub Link */}
+                                <a
+                                    href="https://www.notion.so/3574660f109681d48009e464a78459ad"
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="w-full px-4 py-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg font-medium transition text-left flex items-center gap-3 text-white group block"
+                                >
+                                    <Briefcase className="w-5 h-5 text-gray-400 group-hover:text-white transition-colors" />
+                                    <span className="font-mono text-sm uppercase tracking-wide text-gray-300 group-hover:text-white">Client Hub</span>
                                 </a>
                             </div>
                         </div>

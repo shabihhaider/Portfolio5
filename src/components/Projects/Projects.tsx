@@ -1,6 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { motion } from "framer-motion";
+import { ArrowUpRight } from "lucide-react";
 import { FeaturedProject } from "./FeaturedProject";
 import { ProjectCard } from "./ProjectCard";
 
@@ -15,6 +17,16 @@ const projects = [
         },
         size: "medium" as const,
         gradient: "from-cyan-500/10 to-blue-500/10",
+        comingSoon: false,
+    },
+    {
+        title: "SnapInvoice",
+        description: "Cross-platform invoice management for freelancers and small businesses.",
+        liveUrl: undefined,
+        demoCredentials: undefined,
+        size: "medium" as const,
+        gradient: "from-rose-500/10 to-pink-500/10",
+        comingSoon: true,
     },
 ];
 
@@ -72,6 +84,21 @@ export function Projects() {
                         </div>
                     </div>
                 )}
+
+                {/* View All Work */}
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    className="mt-16 flex justify-center"
+                >
+                    <Link
+                        href="/work"
+                        className="inline-flex items-center gap-2 px-6 py-3 rounded-lg border border-white/10 bg-white/5 text-sm font-mono text-gray-400 hover:text-brand hover:border-brand/30 hover:bg-brand/5 transition-all"
+                    >
+                        View All Case Studies <ArrowUpRight className="w-4 h-4" />
+                    </Link>
+                </motion.div>
             </div>
         </section>
     );

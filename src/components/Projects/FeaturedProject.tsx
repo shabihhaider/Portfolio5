@@ -103,11 +103,7 @@ export function FeaturedProject() {
                         viewport={{ once: true }}
                         transition={{ duration: 0.5 }}
                     >
-                        <span className="text-xs font-mono text-gray-500 px-3 py-1 rounded-full border border-white/10 bg-white/5 mb-4 inline-block">
-                            FYP @ UET Lahore — Team of 4
-                        </span>
-
-                        <h2 className="text-5xl md:text-6xl font-heading font-bold mt-4 mb-6">
+                        <h2 className="text-5xl md:text-6xl font-heading font-bold mb-6">
                             OutfitAI
                             <br />
                             <span className="text-gradient-animated">Fashion Assistant</span>
@@ -118,12 +114,11 @@ export function FeaturedProject() {
                         </p>
 
                         {/* Stats */}
-                        <div className="grid grid-cols-2 gap-4 mb-10">
+                        <div className="grid grid-cols-3 gap-4 mb-10">
                             {[
                                 { value: "117K+", label: "Training Images" },
                                 { value: "89%",   label: "Model 1 Accuracy" },
                                 { value: "81.4%", label: "Model 2 AUC-ROC" },
-                                { value: "203",   label: "Tests Passing" },
                             ].map(s => (
                                 <div key={s.label} className="p-4 rounded-lg bg-white/5 border border-white/10">
                                     <div className="text-2xl font-bold text-brand">{s.value}</div>

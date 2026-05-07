@@ -28,7 +28,9 @@ async function addLeadToNotion(formData: LeadFormData) {
         'Web Application': 'Custom Web App',
         'custom-dev': 'Custom Web App',
         'SaaS / Dashboard': 'SaaS Dashboard',
+        'saas-dashboard': 'SaaS Dashboard',
         'Mobile App': 'Mobile App',
+        'mobile-app': 'Mobile App',
         'Speed Optimisation': 'Speed Optimisation',
     };
 
@@ -45,6 +47,10 @@ async function addLeadToNotion(formData: LeadFormData) {
         '$1,000 - $3,000': '1000 to 3000',
         '$800 - $1,500': '1000 to 3000',
         '800-1500': '1000 to 3000',
+        '$1,500 - $3,000': '3000 to 5000',
+        '1500-3000': '3000 to 5000',
+        '$3,000+': '5000 plus',
+        '3000+': '5000 plus',
         '$3,000 - $5,000': '3000 to 5000',
         '$5,000+': '5000 plus',
         '$1,500+': '3000 to 5000',

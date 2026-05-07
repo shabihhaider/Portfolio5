@@ -36,6 +36,7 @@ async function addLeadToNotion(formData: LeadFormData) {
 
     // Budget display labels — stored as plain text to avoid Notion select option mismatches
     const budgetDisplayMap: Record<string, string> = {
+      'under-400': 'Under $400',
         '400-800': '$400 – $800',
         '800-1500': '$800 – $1,500',
         '1500-3000': '$1,500 – $3,000',
@@ -145,6 +146,7 @@ export async function POST(request: Request) {
             'other': 'Other',
         };
         const budgetLabels: Record<string, string> = {
+          'under-400': 'Under $400',
             '400-800': '$400 – $800',
             '800-1500': '$800 – $1,500',
             '1500-3000': '$1,500 – $3,000',

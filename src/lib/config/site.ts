@@ -13,7 +13,7 @@ export const author = {
     name: 'Shabih Haider',
     fullName: 'Muhammad Shabih Haider',
     initials: 'SH',
-    title: 'Web Developer & AI Specialist',
+    title: 'Web Development & AI Agency',
     roles: ['Landing Pages', 'WordPress', 'AI & SaaS', 'Mobile Apps'],
     twitter: '@shabihhaider',
     email: 'shabihhaider191@gmail.com',

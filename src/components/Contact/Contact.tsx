@@ -154,9 +154,9 @@ function ContactForm() {
                                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
                                     <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
                                 </span>
-                                <span className="font-mono text-green-400 text-sm">
-                                    STATUS: AVAILABLE FOR PROJECTS
-                                </span>
+                                    <span className="font-mono text-green-400 text-sm">
+                                        STATUS: TAKING 2 NEW PROJECTS IN MAY
+                                    </span>
                             </div>
                         </div>
                     </motion.div>
@@ -279,6 +279,7 @@ function ContactForm() {
                                                 className="w-full px-4 py-3 rounded-lg bg-black/50 border border-white/10 text-brand font-mono focus:border-brand/50 focus:outline-none focus:ring-1 focus:ring-[#CCFF00] transition-all appearance-none"
                                             >
                                                 <option value="" className="bg-black text-gray-500">Select range</option>
+                                                <option value="under-400" className="bg-black">Under $400</option>
                                                 <option value="400-800" className="bg-black">$400 – $800</option>
                                                 <option value="800-1500" className="bg-black">$800 – $1,500</option>
                                                 <option value="1500-3000" className="bg-black">$1,500 – $3,000</option>

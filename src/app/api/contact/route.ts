@@ -34,27 +34,20 @@ async function addLeadToNotion(formData: LeadFormData) {
         'Speed Optimisation': 'Speed Optimisation',
     };
 
-    const budgetMap: Record<string, string> = {
-        'Under $200': 'Under 200',
-        'Under $100': 'Under 200',
-        'under-100': 'Under 200',
-        '$200 - $500': '200 to 500',
-        '$100 - $400': '200 to 500',
-        '100-400': '200 to 500',
-        '$500 - $1,000': '500 to 1000',
-        '$400 - $800': '500 to 1000',
-        '400-800': '500 to 1000',
-        '$1,000 - $3,000': '1000 to 3000',
-        '$800 - $1,500': '1000 to 3000',
-        '800-1500': '1000 to 3000',
-        '$1,500 - $3,000': '3000 to 5000',
-        '1500-3000': '3000 to 5000',
-        '$3,000+': '5000 plus',
-        '3000+': '5000 plus',
-        '$3,000 - $5,000': '3000 to 5000',
-        '$5,000+': '5000 plus',
-        '$1,500+': '3000 to 5000',
-        '1500+': '3000 to 5000',
+    // Budget display labels — stored as plain text to avoid Notion select option mismatches
+    const budgetDisplayMap: Record<string, string> = {
+        '400-800': '$400 – $800',
+        '800-1500': '$800 – $1,500',
+        '1500-3000': '$1,500 – $3,000',
+        '3000+': '$3,000+',
+        'discuss': "Let's Discuss",
+        // legacy values
+        'Under $200': 'Under $200',
+        'under-100': 'Under $100',
+        '100-400': '$100 – $400',
+        '$400 - $800': '$400 – $800',
+        '$800 - $1,500': '$800 – $1,500',
+        '$1,500+': '$1,500+',
     };
 
     const properties: Record<string, any> = {
@@ -90,9 +83,10 @@ async function addLeadToNotion(formData: LeadFormData) {
         };
     }
 
-    if (formData.budget && budgetMap[formData.budget]) {
+    if (formData.budget) {
+        const budgetDisplay = budgetDisplayMap[formData.budget] ?? formData.budget;
         properties.Budget = {
-            select: { name: budgetMap[formData.budget] },
+            rich_text: [{ text: { content: budgetDisplay } }],
         };
     }
 

@@ -140,89 +140,221 @@ export async function POST(request: Request) {
             );
         }
 
+        // Display-friendly label maps for emails
+        const serviceLabels: Record<string, string> = {
+            'landing-page': 'Landing Page',
+            'wordpress': 'WordPress Development',
+            'ai-integration': 'AI Integration',
+            'custom-dev': 'Custom Development',
+            'saas-dashboard': 'SaaS / Dashboard',
+            'mobile-app': 'Mobile App',
+            'other': 'Other',
+        };
+        const budgetLabels: Record<string, string> = {
+            '400-800': '$400 – $800',
+            '800-1500': '$800 – $1,500',
+            '1500-3000': '$1,500 – $3,000',
+            '3000+': '$3,000+',
+            'discuss': "Let's Discuss",
+        };
+
+        const serviceLabel = projectType ? (serviceLabels[projectType] ?? projectType) : null;
+        const budgetLabel = budget ? (budgetLabels[budget] ?? budget) : null;
+        const firstName = name.split(' ')[0];
+
         // Email 1 — Admin notification
         await transporter.sendMail({
             from: `"Shabih. Agency" <${process.env.GMAIL_USER}>`,
             to: author.email,
             replyTo: email,
-            subject: `New Project Inquiry - ${name}`,
+            subject: `New Lead: ${name}${serviceLabel ? ` — ${serviceLabel}` : ''}`,
             html: `
-                <div style="font-family: monospace; background: #0A0A0A; color: #fff; padding: 40px; border-radius: 12px;">
-                    <div style="border-left: 4px solid #CCFF00; padding-left: 20px; margin-bottom: 30px;">
-                        <h1 style="color: #CCFF00; margin: 0;">New Project Inquiry</h1>
-                        <p style="color: #888; margin: 5px 0 0 0;">From shabih.tech contact form</p>
-                    </div>
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#f4f4f5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f5;padding:40px 20px;">
+    <tr><td align="center">
+      <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;">
 
-                    <div style="background: #111; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-                        <p style="color: #888; margin: 0 0 5px 0;">// FROM</p>
-                        <p style="color: #fff; font-size: 18px; margin: 0;"><strong>${name}</strong></p>
-                    </div>
+        <!-- Header -->
+        <tr><td style="background:#0A0A0A;border-radius:12px 12px 0 0;padding:32px 40px;border-bottom:3px solid #CCFF00;">
+          <table width="100%" cellpadding="0" cellspacing="0">
+            <tr>
+              <td>
+                <p style="margin:0;color:#CCFF00;font-size:12px;font-weight:600;letter-spacing:2px;text-transform:uppercase;">Shabih. Agency</p>
+                <h1 style="margin:8px 0 0;color:#ffffff;font-size:22px;font-weight:700;">New Project Inquiry</h1>
+              </td>
+              <td align="right">
+                <span style="background:#CCFF00;color:#000;font-size:11px;font-weight:700;padding:6px 14px;border-radius:20px;letter-spacing:1px;">NEW LEAD</span>
+              </td>
+            </tr>
+          </table>
+        </td></tr>
 
-                    <div style="background: #111; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-                        <p style="color: #888; margin: 0 0 5px 0;">// EMAIL</p>
-                        <p style="color: #CCFF00; font-size: 16px; margin: 0;">
-                            <a href="mailto:${email}" style="color: #CCFF00; text-decoration: none;">${email}</a>
-                        </p>
-                    </div>
+        <!-- Lead details -->
+        <tr><td style="background:#ffffff;padding:32px 40px;">
 
-                    ${projectType ? `
-                    <div style="background: #111; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-                        <p style="color: #888; margin: 0 0 5px 0;">// PROJECT TYPE</p>
-                        <p style="color: #fff; font-size: 16px; margin: 0;">${projectType}</p>
-                    </div>
-                    ` : ''}
+          <!-- Name + Email row -->
+          <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
+            <tr>
+              <td width="50%" style="padding-right:12px;vertical-align:top;">
+                <p style="margin:0 0 4px;font-size:11px;color:#6b7280;font-weight:600;text-transform:uppercase;letter-spacing:1px;">Client Name</p>
+                <p style="margin:0;font-size:16px;color:#111827;font-weight:600;">${name}</p>
+              </td>
+              <td width="50%" style="padding-left:12px;vertical-align:top;">
+                <p style="margin:0 0 4px;font-size:11px;color:#6b7280;font-weight:600;text-transform:uppercase;letter-spacing:1px;">Email</p>
+                <p style="margin:0;font-size:15px;"><a href="mailto:${email}" style="color:#2563eb;text-decoration:none;font-weight:500;">${email}</a></p>
+              </td>
+            </tr>
+          </table>
 
-                    ${budget ? `
-                    <div style="background: #111; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-                        <p style="color: #888; margin: 0 0 5px 0;">// BUDGET</p>
-                        <p style="color: #fff; font-size: 16px; margin: 0;">${budget}</p>
-                    </div>
-                    ` : ''}
+          <!-- Service + Budget row -->
+          <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
+            <tr>
+              ${serviceLabel ? `
+              <td width="50%" style="padding-right:12px;vertical-align:top;">
+                <p style="margin:0 0 4px;font-size:11px;color:#6b7280;font-weight:600;text-transform:uppercase;letter-spacing:1px;">Service Requested</p>
+                <span style="display:inline-block;background:#f0fdf4;color:#166534;font-size:13px;font-weight:600;padding:5px 12px;border-radius:6px;border:1px solid #bbf7d0;">${serviceLabel}</span>
+              </td>` : '<td width="50%"></td>'}
+              ${budgetLabel ? `
+              <td width="50%" style="padding-left:12px;vertical-align:top;">
+                <p style="margin:0 0 4px;font-size:11px;color:#6b7280;font-weight:600;text-transform:uppercase;letter-spacing:1px;">Budget Range</p>
+                <span style="display:inline-block;background:#fefce8;color:#854d0e;font-size:13px;font-weight:600;padding:5px 12px;border-radius:6px;border:1px solid #fde68a;">${budgetLabel}</span>
+              </td>` : '<td width="50%"></td>'}
+            </tr>
+          </table>
 
-                    <div style="background: #111; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-                        <p style="color: #888; margin: 0 0 10px 0;">// MESSAGE</p>
-                        <p style="color: #fff; font-size: 16px; line-height: 1.6; margin: 0; white-space: pre-wrap;">${message}</p>
-                    </div>
+          <!-- Message -->
+          <div style="background:#f9fafb;border-left:3px solid #CCFF00;border-radius:0 8px 8px 0;padding:16px 20px;margin-bottom:28px;">
+            <p style="margin:0 0 8px;font-size:11px;color:#6b7280;font-weight:600;text-transform:uppercase;letter-spacing:1px;">Message</p>
+            <p style="margin:0;font-size:15px;color:#374151;line-height:1.7;white-space:pre-wrap;">${message}</p>
+          </div>
 
-                    <div style="border-top: 1px solid #222; padding-top: 20px; margin-top: 30px;">
-                        <p style="color: #666; font-size: 12px; margin: 0;">
-                            Sent via shabih.tech • ${new Date().toLocaleString()}
-                        </p>
-                    </div>
-                </div>
+          <!-- CTA button -->
+          <table cellpadding="0" cellspacing="0">
+            <tr>
+              <td style="border-radius:8px;background:#0A0A0A;">
+                <a href="mailto:${email}?subject=Re: Your project inquiry — Shabih. Agency" style="display:inline-block;padding:14px 28px;color:#CCFF00;font-size:14px;font-weight:700;text-decoration:none;letter-spacing:0.5px;">Reply to ${firstName} →</a>
+              </td>
+            </tr>
+          </table>
+
+        </td></tr>
+
+        <!-- Footer -->
+        <tr><td style="background:#f9fafb;border-radius:0 0 12px 12px;padding:20px 40px;border-top:1px solid #e5e7eb;">
+          <p style="margin:0;font-size:12px;color:#9ca3af;">Received via shabih.tech contact form &nbsp;·&nbsp; ${new Date().toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' })}</p>
+        </td></tr>
+
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>
             `,
         });
 
-        // Email 2 — Client thank you
+        // Email 2 — Client confirmation
         await transporter.sendMail({
             from: `"Shabih. Agency" <${process.env.GMAIL_USER}>`,
             to: email,
-            subject: `Got your message, ${name.split(' ')[0]} — I'll be in touch soon`,
+            subject: `We received your inquiry, ${firstName} — expect a response within 24 hours`,
             html: `
-                <div style="font-family: monospace; background: #0A0A0A; color: #fff; padding: 40px; border-radius: 12px; max-width: 600px;">
-                    <div style="border-left: 4px solid #CCFF00; padding-left: 20px; margin-bottom: 30px;">
-                        <h1 style="color: #CCFF00; margin: 0; font-size: 24px;">Message received.</h1>
-                        <p style="color: #888; margin: 8px 0 0 0;">Shabih. Agency</p>
-                    </div>
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#f4f4f5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f5;padding:40px 20px;">
+    <tr><td align="center">
+      <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;">
 
-                    <p style="color: #ccc; font-size: 16px; line-height: 1.7; margin: 0 0 24px 0;">
-                        Hi ${name.split(' ')[0]},
-                    </p>
+        <!-- Header -->
+        <tr><td style="background:#0A0A0A;border-radius:12px 12px 0 0;padding:32px 40px;">
+          <p style="margin:0 0 6px;color:#CCFF00;font-size:12px;font-weight:700;letter-spacing:2px;text-transform:uppercase;">Shabih. Agency</p>
+          <h1 style="margin:0;color:#ffffff;font-size:26px;font-weight:700;line-height:1.3;">Your inquiry is in<br>good hands, ${firstName}.</h1>
+        </td></tr>
 
-                    <p style="color: #ccc; font-size: 16px; line-height: 1.7; margin: 0 0 24px 0;">
-                        Thanks for reaching out. I've received your message and will get back to you within <span style="color: #CCFF00;">24 hours</span>.
-                    </p>
+        <!-- Body -->
+        <tr><td style="background:#ffffff;padding:36px 40px;">
 
-                    <p style="color: #ccc; font-size: 16px; line-height: 1.7; margin: 0 0 32px 0;">
-                        In the meantime, feel free to reply to this email if you'd like to add anything.
-                    </p>
+          <p style="margin:0 0 20px;font-size:16px;color:#374151;line-height:1.7;">
+            Thanks for reaching out to Shabih. Agency. We've reviewed your message and will send you a detailed response — including a project scope and quote — within <strong style="color:#111827;">24 hours</strong>.
+          </p>
 
-                    <div style="border-top: 1px solid #222; padding-top: 24px;">
-                        <p style="color: #fff; font-size: 15px; margin: 0 0 4px 0;"><strong>Muhammad Shabih Haider</strong></p>
-                        <p style="color: #888; font-size: 13px; margin: 0 0 4px 0;">Shabih. Agency</p>
-                        <a href="https://shabih.tech" style="color: #CCFF00; font-size: 13px; text-decoration: none;">shabih.tech</a>
-                    </div>
-                </div>
+          <!-- What happens next -->
+          <div style="background:#f9fafb;border-radius:10px;padding:24px 28px;margin:28px 0;">
+            <p style="margin:0 0 16px;font-size:13px;color:#6b7280;font-weight:700;text-transform:uppercase;letter-spacing:1px;">What happens next</p>
+            <table cellpadding="0" cellspacing="0" width="100%">
+              <tr>
+                <td style="padding-bottom:14px;vertical-align:top;">
+                  <table cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td style="width:28px;height:28px;background:#CCFF00;border-radius:50%;text-align:center;vertical-align:middle;font-size:12px;font-weight:800;color:#000;flex-shrink:0;">1</td>
+                      <td style="padding-left:14px;font-size:14px;color:#374151;line-height:1.5;"><strong style="color:#111827;">Scope review</strong> — We review your requirements and identify the right approach for your project.</td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding-bottom:14px;vertical-align:top;">
+                  <table cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td style="width:28px;height:28px;background:#CCFF00;border-radius:50%;text-align:center;vertical-align:middle;font-size:12px;font-weight:800;color:#000;">2</td>
+                      <td style="padding-left:14px;font-size:14px;color:#374151;line-height:1.5;"><strong style="color:#111827;">Proposal & quote</strong> — You'll receive a fixed-price quote with a clear scope and timeline. No hourly surprises.</td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+              <tr>
+                <td style="vertical-align:top;">
+                  <table cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td style="width:28px;height:28px;background:#CCFF00;border-radius:50%;text-align:center;vertical-align:middle;font-size:12px;font-weight:800;color:#000;">3</td>
+                      <td style="padding-left:14px;font-size:14px;color:#374151;line-height:1.5;"><strong style="color:#111827;">Kickoff call</strong> — Once you approve the proposal, we align on details and get started immediately.</td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+            </table>
+          </div>
+
+          <p style="margin:0 0 28px;font-size:15px;color:#374151;line-height:1.7;">
+            In the meantime, feel free to explore our work at <a href="https://shabih.tech/work" style="color:#2563eb;text-decoration:none;font-weight:500;">shabih.tech/work</a> to see what we've built for other clients.
+          </p>
+
+          <!-- CTA -->
+          <table cellpadding="0" cellspacing="0">
+            <tr>
+              <td style="border-radius:8px;background:#0A0A0A;">
+                <a href="https://shabih.tech/work" style="display:inline-block;padding:13px 26px;color:#CCFF00;font-size:14px;font-weight:700;text-decoration:none;letter-spacing:0.5px;">View Our Work →</a>
+              </td>
+            </tr>
+          </table>
+
+        </td></tr>
+
+        <!-- Signature -->
+        <tr><td style="background:#f9fafb;padding:24px 40px;border-top:1px solid #e5e7eb;">
+          <table cellpadding="0" cellspacing="0" width="100%">
+            <tr>
+              <td>
+                <p style="margin:0 0 2px;font-size:15px;color:#111827;font-weight:700;">Shabih. Agency</p>
+                <p style="margin:0 0 2px;font-size:13px;color:#6b7280;">Web Development &amp; AI Integration</p>
+                <a href="https://shabih.tech" style="color:#2563eb;font-size:13px;text-decoration:none;">shabih.tech</a>
+              </td>
+              <td align="right">
+                <p style="margin:0;font-size:12px;color:#9ca3af;">You're receiving this because<br>you submitted a form on shabih.tech</p>
+              </td>
+            </tr>
+          </table>
+        </td></tr>
+
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>
             `,
         });
 

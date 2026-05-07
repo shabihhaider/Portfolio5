@@ -110,13 +110,32 @@ const transporter = nodemailer.createTransport({
     },
 });
 
+async function verifyRecaptcha(token: string): Promise<boolean> {
+    if (!process.env.RECAPTCHA_SECRET_KEY) return true; // skip if not configured
+    const res = await fetch('https://www.google.com/recaptcha/api/siteverify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: `secret=${process.env.RECAPTCHA_SECRET_KEY}&response=${token}`,
+    });
+    const data = await res.json();
+    return data.success && data.score >= 0.5;
+}
+
 export async function POST(request: Request) {
     try {
-        const { name, email, projectType, budget, message } = await request.json();
+        const { name, email, projectType, budget, message, recaptchaToken } = await request.json();
 
         if (!name || !email || !message) {
             return NextResponse.json(
                 { error: 'Missing required fields' },
+                { status: 400 }
+            );
+        }
+
+        const isHuman = await verifyRecaptcha(recaptchaToken ?? '');
+        if (!isHuman) {
+            return NextResponse.json(
+                { error: 'reCAPTCHA verification failed' },
                 { status: 400 }
             );
         }

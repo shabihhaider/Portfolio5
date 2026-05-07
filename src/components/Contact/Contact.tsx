@@ -1,11 +1,18 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { FaLinkedin, FaInstagram, FaCheck, FaCopy } from "react-icons/fa6";
+import { GoogleReCaptchaProvider, useGoogleReCaptcha } from "react-google-recaptcha-v3";
 import { author } from "@/lib/config/site";
 
-export function Contact() {
+const socialLinks = [
+    { icon: FaLinkedin, href: author.social.linkedin, label: "LinkedIn" },
+    { icon: FaInstagram, href: author.social.instagram, label: "Instagram" },
+];
+
+function ContactForm() {
+    const { executeRecaptcha } = useGoogleReCaptcha();
     const [formState, setFormState] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
     const [copied, setCopied] = useState(false);
     const [formData, setFormData] = useState({
@@ -16,15 +23,18 @@ export function Contact() {
         message: ''
     });
 
-    const handleSubmit = async (e: React.FormEvent) => {
+    const handleSubmit = useCallback(async (e: React.FormEvent) => {
         e.preventDefault();
+        if (!executeRecaptcha) return;
         setFormState('sending');
 
         try {
+            const token = await executeRecaptcha('contact_form');
+
             const res = await fetch('/api/contact', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(formData)
+                body: JSON.stringify({ ...formData, recaptchaToken: token })
             });
 
             if (!res.ok) throw new Error('Failed to send');
@@ -35,18 +45,13 @@ export function Contact() {
             setFormState('error');
             setTimeout(() => setFormState('idle'), 3000);
         }
-    };
+    }, [executeRecaptcha, formData]);
 
     const copyEmail = () => {
         navigator.clipboard.writeText(author.email);
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
     };
-
-    const socialLinks = [
-        { icon: FaLinkedin, href: author.social.linkedin, label: "LinkedIn" },
-        { icon: FaInstagram, href: author.social.instagram, label: "Instagram" },
-    ];
 
     return (
         <section id="contact" className="relative py-20 px-6 bg-background overflow-hidden">
@@ -163,7 +168,7 @@ export function Contact() {
                         viewport={{ once: true }}
                     >
                         <div className="p-8 rounded-2xl border border-white/10 bg-white/5 backdrop-blur-md h-full relative overflow-hidden min-h-[520px]">
-                            {/* Success Overlay - Replaces Form */}
+                            {/* Success Overlay */}
                             {formState === 'success' ? (
                                 <motion.div
                                     initial={{ opacity: 0, scale: 0.9 }}
@@ -180,20 +185,18 @@ export function Contact() {
                                         Thanks for reaching out! We&apos;ve received your project inquiry and will get back to you within 24 hours.
                                     </p>
 
-                                    <div className="flex flex-col items-center gap-4 w-full">
-                                        <div className="flex gap-4">
-                                            {socialLinks.map((social) => (
-                                                <a
-                                                    key={social.label}
-                                                    href={social.href}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className="p-4 rounded-xl border border-white/10 bg-white/5 hover:bg-brand/10 hover:border-brand/30 transition-all duration-300 group"
-                                                >
-                                                    <social.icon className="text-2xl text-gray-400 group-hover:text-brand transition-colors" />
-                                                </a>
-                                            ))}
-                                        </div>
+                                    <div className="flex gap-4">
+                                        {socialLinks.map((social) => (
+                                            <a
+                                                key={social.label}
+                                                href={social.href}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="p-4 rounded-xl border border-white/10 bg-white/5 hover:bg-brand/10 hover:border-brand/30 transition-all duration-300 group"
+                                            >
+                                                <social.icon className="text-2xl text-gray-400 group-hover:text-brand transition-colors" />
+                                            </a>
+                                        ))}
                                     </div>
 
                                     <button
@@ -341,5 +344,13 @@ export function Contact() {
                 </div>
             </div>
         </section>
+    );
+}
+
+export function Contact() {
+    return (
+        <GoogleReCaptchaProvider reCaptchaKey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY!}>
+            <ContactForm />
+        </GoogleReCaptchaProvider>
     );
 }

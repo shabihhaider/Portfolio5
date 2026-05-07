@@ -273,7 +273,7 @@ export async function POST(request: Request) {
         <tr><td style="background:#ffffff;padding:36px 40px;">
 
           <p style="margin:0 0 20px;font-size:16px;color:#374151;line-height:1.7;">
-            Thanks for reaching out to Shabih. Agency. We've reviewed your message and will send you a detailed response — including a project scope and quote — within <strong style="color:#111827;">24 hours</strong>.
+            Thanks for reaching out to Shabih. Agency. We've received your message and will send you a detailed response — including a project scope and quote — within <strong style="color:#111827;">24 hours</strong>.
           </p>
 
           <!-- What happens next -->
@@ -281,31 +281,37 @@ export async function POST(request: Request) {
             <p style="margin:0 0 16px;font-size:13px;color:#6b7280;font-weight:700;text-transform:uppercase;letter-spacing:1px;">What happens next</p>
             <table cellpadding="0" cellspacing="0" width="100%">
               <tr>
-                <td style="padding-bottom:14px;vertical-align:top;">
-                  <table cellpadding="0" cellspacing="0">
+                <td style="padding-bottom:16px;vertical-align:top;">
+                  <table cellpadding="0" cellspacing="0" width="100%">
                     <tr>
-                      <td style="width:28px;height:28px;background:#CCFF00;border-radius:50%;text-align:center;vertical-align:middle;font-size:12px;font-weight:800;color:#000;flex-shrink:0;">1</td>
-                      <td style="padding-left:14px;font-size:14px;color:#374151;line-height:1.5;"><strong style="color:#111827;">Scope review</strong> — We review your requirements and identify the right approach for your project.</td>
+                      <td width="28" style="width:28px;min-width:28px;max-width:28px;vertical-align:top;padding-top:1px;">
+                        <div style="width:28px;height:28px;background:#CCFF00;border-radius:14px;text-align:center;line-height:28px;font-size:12px;font-weight:800;color:#000;">1</div>
+                      </td>
+                      <td style="padding-left:14px;font-size:14px;color:#374151;line-height:1.6;vertical-align:top;"><strong style="color:#111827;">Scope review</strong> — We review your requirements and identify the right approach for your project.</td>
                     </tr>
                   </table>
                 </td>
               </tr>
               <tr>
-                <td style="padding-bottom:14px;vertical-align:top;">
-                  <table cellpadding="0" cellspacing="0">
+                <td style="padding-bottom:16px;vertical-align:top;">
+                  <table cellpadding="0" cellspacing="0" width="100%">
                     <tr>
-                      <td style="width:28px;height:28px;background:#CCFF00;border-radius:50%;text-align:center;vertical-align:middle;font-size:12px;font-weight:800;color:#000;">2</td>
-                      <td style="padding-left:14px;font-size:14px;color:#374151;line-height:1.5;"><strong style="color:#111827;">Proposal & quote</strong> — You'll receive a fixed-price quote with a clear scope and timeline. No hourly surprises.</td>
+                      <td width="28" style="width:28px;min-width:28px;max-width:28px;vertical-align:top;padding-top:1px;">
+                        <div style="width:28px;height:28px;background:#CCFF00;border-radius:14px;text-align:center;line-height:28px;font-size:12px;font-weight:800;color:#000;">2</div>
+                      </td>
+                      <td style="padding-left:14px;font-size:14px;color:#374151;line-height:1.6;vertical-align:top;"><strong style="color:#111827;">Proposal &amp; quote</strong> — You'll receive a fixed-price quote with a clear scope and timeline. No hourly surprises.</td>
                     </tr>
                   </table>
                 </td>
               </tr>
               <tr>
                 <td style="vertical-align:top;">
-                  <table cellpadding="0" cellspacing="0">
+                  <table cellpadding="0" cellspacing="0" width="100%">
                     <tr>
-                      <td style="width:28px;height:28px;background:#CCFF00;border-radius:50%;text-align:center;vertical-align:middle;font-size:12px;font-weight:800;color:#000;">3</td>
-                      <td style="padding-left:14px;font-size:14px;color:#374151;line-height:1.5;"><strong style="color:#111827;">Kickoff call</strong> — Once you approve the proposal, we align on details and get started immediately.</td>
+                      <td width="28" style="width:28px;min-width:28px;max-width:28px;vertical-align:top;padding-top:1px;">
+                        <div style="width:28px;height:28px;background:#CCFF00;border-radius:14px;text-align:center;line-height:28px;font-size:12px;font-weight:800;color:#000;">3</div>
+                      </td>
+                      <td style="padding-left:14px;font-size:14px;color:#374151;line-height:1.6;vertical-align:top;"><strong style="color:#111827;">Kickoff call</strong> — Once you approve the proposal, we align on details and get started immediately.</td>
                     </tr>
                   </table>
                 </td>
